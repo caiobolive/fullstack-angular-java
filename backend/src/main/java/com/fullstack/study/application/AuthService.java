@@ -7,9 +7,11 @@ import com.fullstack.study.infrastructure.RefreshTokenRepository;
 import com.fullstack.study.infrastructure.UserAccountRepository;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,7 +107,8 @@ public class AuthService {
 				.claim("roles", roles)
 				.build();
 
-		return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+		var header = JwsHeader.with(MacAlgorithm.HS256).build();
+		return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
 	}
 
 	public record AuthTokens(String accessToken, String refreshToken, Instant refreshTokenExpiresAt) {}

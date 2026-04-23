@@ -21,12 +21,17 @@ public class DevSeedConfig {
 			var email = System.getenv().getOrDefault("APP_SEED_ADMIN_EMAIL", "admin@example.com");
 			var password = System.getenv().getOrDefault("APP_SEED_ADMIN_PASSWORD", "admin123");
 
-			if (users.existsByEmailIgnoreCase(email)) {
+			var existing = users.findByEmailIgnoreCase(email);
+			if (existing.isPresent()) {
+				var user = existing.get();
+				user.setPasswordHash(passwordEncoder.encode(password));
+				user.setEnabled(true);
+				user.setRoles(Set.of(Role.ROLE_ADMIN));
+				users.save(user);
 				return;
 			}
 
-			var user = new UserAccount(email, passwordEncoder.encode(password), Set.of(Role.ROLE_ADMIN));
-			users.save(user);
+			users.save(new UserAccount(email, passwordEncoder.encode(password), Set.of(Role.ROLE_ADMIN)));
 		};
 	}
 }
