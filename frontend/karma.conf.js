@@ -21,6 +21,11 @@ module.exports = function (config) {
     ],
     frameworks: ["jasmine", "@angular-devkit/build-angular"],
     browsers: ["ChromeHeadless"],
+    coverageReporter: {
+      dir: require("path").join(__dirname, "coverage"),
+      subdir: ".",
+      reporters: [{ type: "html" }, { type: "text-summary" }, { type: "lcovonly" }],
+    },
   });
 };
 

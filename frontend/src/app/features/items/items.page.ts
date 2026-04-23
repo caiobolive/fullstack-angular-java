@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
 import { ItemsApi, type ItemResponse } from '../../api/items.api';
@@ -6,6 +6,7 @@ import { ItemsApi, type ItemResponse } from '../../api/items.api';
 @Component({
   selector: 'app-items-page',
   imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
       <header class="header">
@@ -21,10 +22,27 @@ import { ItemsApi, type ItemResponse } from '../../api/items.api';
         </form>
       </section>
 
+      @if (selected(); as sel) {
+        <section class="card detail">
+          <div class="row">
+            <h2>Editar item</h2>
+            <button type="button" class="secondary" (click)="clearSelection()" [disabled]="loading()">
+              Fechar
+            </button>
+          </div>
+          <p class="muted">ID: {{ sel.id }} · Owner: {{ sel.ownerId }}</p>
+          <form [formGroup]="editForm" (ngSubmit)="saveEdit()">
+            <input placeholder="Nome" formControlName="name" />
+            <input placeholder="Descrição (opcional)" formControlName="description" />
+            <button type="submit" [disabled]="editForm.invalid || loading()">Salvar</button>
+          </form>
+        </section>
+      }
+
       <section class="card">
         <div class="row">
           <h2>Lista</h2>
-          <button (click)="reload()" [disabled]="loading()">Recarregar</button>
+          <button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
         </div>
 
         @if (error()) {
@@ -33,14 +51,17 @@ import { ItemsApi, type ItemResponse } from '../../api/items.api';
 
         <ul class="list">
           @for (item of items(); track item.id) {
-            <li class="item">
+            <li class="item" [class.selected]="selected()?.id === item.id">
               <div class="meta">
                 <strong>{{ item.name }}</strong>
                 <small>ID: {{ item.id }}</small>
                 <small>Owner: {{ item.ownerId }}</small>
               </div>
               <div class="actions">
-                <button class="danger" (click)="remove(item.id)" [disabled]="loading()">Excluir</button>
+                <button type="button" class="secondary" (click)="openEdit(item.id)" [disabled]="loading()">
+                  Editar
+                </button>
+                <button type="button" class="danger" (click)="remove(item.id)" [disabled]="loading()">Excluir</button>
               </div>
             </li>
           }
@@ -125,6 +146,26 @@ import { ItemsApi, type ItemResponse } from '../../api/items.api';
       .danger {
         background: #b91c1c;
       }
+      .secondary {
+        background: #374151;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .item.selected {
+        border-color: #93c5fd;
+        background: #eff6ff;
+      }
+      .muted {
+        margin: 0 0 12px;
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
+      .detail form {
+        margin-top: 8px;
+      }
     `
   ]
 })
@@ -132,11 +173,18 @@ export class ItemsPage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<ItemResponse[]>([]);
+  /** Item carregado via GET (detalhe + edição). */
+  readonly selected = signal<ItemResponse | null>(null);
 
   private readonly api = inject(ItemsApi);
   private readonly fb = inject(FormBuilder);
 
   readonly form = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(200)]],
+    description: ['']
+  });
+
+  readonly editForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     description: ['']
   });
@@ -152,12 +200,63 @@ export class ItemsPage {
       next: (items) => {
         this.items.set(items);
         this.loading.set(false);
+        const sel = this.selected();
+        if (sel) {
+          const still = items.find((i) => i.id === sel.id);
+          if (!still) {
+            this.clearSelection();
+          }
+        }
       },
       error: () => {
         this.loading.set(false);
         this.error.set('Falha ao carregar items (verifique login/API).');
       }
     });
+  }
+
+  openEdit(id: string) {
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.get(id).subscribe({
+      next: (item) => {
+        this.selected.set(item);
+        this.editForm.reset({
+          name: item.name,
+          description: item.description ?? ''
+        });
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Falha ao carregar o item.');
+      }
+    });
+  }
+
+  clearSelection(): void {
+    this.selected.set(null);
+    this.editForm.reset({ name: '', description: '' });
+  }
+
+  saveEdit() {
+    const item = this.selected();
+    if (!item || this.editForm.invalid) return;
+    this.loading.set(true);
+    this.error.set(null);
+    const v = this.editForm.getRawValue();
+    this.api
+      .update(item.id, { name: v.name, description: v.description ? v.description : null })
+      .subscribe({
+        next: (updated) => {
+          this.selected.set(updated);
+          this.reload();
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set('Falha ao atualizar item.');
+        }
+      });
   }
 
   create() {
@@ -182,7 +281,12 @@ export class ItemsPage {
     this.loading.set(true);
     this.error.set(null);
     this.api.delete(id).subscribe({
-      next: () => this.reload(),
+      next: () => {
+        if (this.selected()?.id === id) {
+          this.clearSelection();
+        }
+        this.reload();
+      },
       error: () => {
         this.loading.set(false);
         this.error.set('Falha ao excluir item.');
