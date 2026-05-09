@@ -11,8 +11,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "items")
-public class Item {
+@Table(name = "clients")
+public class Client {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -21,8 +21,14 @@ public class Item {
 	@Column(nullable = false, length = 200)
 	private String name;
 
-	@Column(length = 2000)
-	private String description;
+	@Column(nullable = false, length = 320)
+	private String email;
+
+	@Column(nullable = false, length = 30)
+	private String phone;
+
+	@Column(nullable = false, length = 18)
+	private String document;
 
 	@Column(name = "owner_id", nullable = false)
 	private UUID ownerId;
@@ -33,11 +39,13 @@ public class Item {
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt = Instant.now();
 
-	protected Item() {}
+	protected Client() {}
 
-	public Item(String name, String description, UUID ownerId) {
+	public Client(String name, String email, String phone, String document, UUID ownerId) {
 		this.name = name;
-		this.description = description;
+		this.email = email;
+		this.phone = phone;
+		this.document = document;
 		this.ownerId = ownerId;
 	}
 
@@ -49,8 +57,16 @@ public class Item {
 		return name;
 	}
 
-	public String getDescription() {
-		return description;
+	public String getEmail() {
+		return email;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public String getDocument() {
+		return document;
 	}
 
 	public UUID getOwnerId() {
@@ -70,9 +86,18 @@ public class Item {
 		this.updatedAt = Instant.now();
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public void setEmail(String email) {
+		this.email = email;
+		this.updatedAt = Instant.now();
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+		this.updatedAt = Instant.now();
+	}
+
+	public void setDocument(String document) {
+		this.document = document;
 		this.updatedAt = Instant.now();
 	}
 }
-

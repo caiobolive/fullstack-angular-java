@@ -28,6 +28,10 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- Defaults alinhados a application-dev.properties / docker/.env.example (override: -Dflyway.password=...) -->
+		<flyway.url>jdbc:postgresql://localhost:5432/fullstack_db</flyway.url>
+		<flyway.user>fullstack_user</flyway.user>
+		<flyway.password>change_me</flyway.password>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -110,6 +114,25 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<configuration>
+					<locations>
+						<location>classpath:db/migration</location>
+					</locations>
+					<url>${flyway.url}</url>
+					<user>${flyway.user}</user>
+					<password>${flyway.password}</password>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>${postgresql.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
