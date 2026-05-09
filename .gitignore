@@ -45,3 +45,6 @@ build/
 # Documentação / estudo só na máquina local (não enviar ao remoto)
 /QUESTIONARIO_JAVA_PLENO.md
 /RESUMO_BACKEND_JAVA.md
+
+# Comandos locais (referência pessoal)
+/LOCAL_RUN_COMMANDS.md
