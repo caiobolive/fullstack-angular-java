@@ -33,9 +33,9 @@ describe('authInterceptor', () => {
     const tokenStorage = TestBed.inject(TokenStorageService);
     tokenStorage.setTokens('tok', 'ref');
 
-    http.get('http://localhost:8080/api/v1/items').subscribe();
+    http.get('http://localhost:8080/api/v1/clients').subscribe();
 
-    const req = httpMock.expectOne('http://localhost:8080/api/v1/items');
+    const req = httpMock.expectOne('http://localhost:8080/api/v1/clients');
     expect(req.request.headers.get('Authorization')).toBe('Bearer tok');
     req.flush([]);
   });

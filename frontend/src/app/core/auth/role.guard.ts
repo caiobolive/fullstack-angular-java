@@ -13,7 +13,7 @@ export const roleGuard = (required: Role[]): CanActivateFn => {
 
     const roles = auth.getRoles();
     const allowed = required.some((r) => roles.includes(r));
-    return allowed ? true : router.parseUrl('/items');
+    return allowed ? true : router.parseUrl('/clients');
   };
 };
 

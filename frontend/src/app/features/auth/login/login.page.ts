@@ -34,7 +34,7 @@ import { AuthService } from '../../../core/auth/auth.service';
         <code>admin@example.com</code> / <code>admin123</code>
       </p>
 
-      <a routerLink="/items">Ir para Items</a>
+      <a routerLink="/clients">Ir para Clientes</a>
     </div>
   `,
   styles: [
@@ -110,7 +110,7 @@ export class LoginPage {
     this.auth.login(this.form.getRawValue()).subscribe({
       next: async () => {
         this.loading.set(false);
-        await this.router.navigateByUrl('/items');
+        await this.router.navigateByUrl('/clients');
       },
       error: () => {
         this.loading.set(false);
