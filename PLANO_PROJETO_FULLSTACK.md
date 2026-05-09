@@ -57,9 +57,10 @@ Fullstack/
 ├── scripts/                 # check-env.ps1 (diagnóstico JAVA_HOME/PATH no Windows)
 ├── postman/ , .postman/     # artefatos Postman (quando presentes)
 ├── README.md
-├── RESUMO_BACKEND_JAVA.md   # resumo técnico do backend (mantido junto ao código)
 └── PLANO_PROJETO_FULLSTACK.md
 ```
+
+**Opcional (só local, ignorados pelo Git):** `RESUMO_BACKEND_JAVA.md`, `QUESTIONARIO_JAVA_PLENO.md` — mantenha cópias na sua máquina se usar; não são parte do repositório.
 
 **Observação**: o `README.md` menciona `docs/` como pasta ideal; ela pode ser criada depois para ADRs/threat model.
 

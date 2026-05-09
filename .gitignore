@@ -41,3 +41,7 @@ build/
 
 # Local tools folder (optional cache)
 .tools/
+
+# Documentação / estudo só na máquina local (não enviar ao remoto)
+/QUESTIONARIO_JAVA_PLENO.md
+/RESUMO_BACKEND_JAVA.md
