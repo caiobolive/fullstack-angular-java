@@ -1,0 +1,63 @@
+# Builds the Angular app and publishes to branch `gh-pages`.
+# GitHub repo → Settings → Pages → Source: Deploy from branch → gh-pages / root.
+#
+# Secrets (repository): API_BASE_URL = Cloud Run URL without trailing slash, e.g. https://xxx-xxxxx.run.app
+#
+# Project site URL: https://USER.github.io/REPO/ — base-href defaults to /REPO/.
+# User site (repo named USER.github.io): set repo variable GH_PAGES_BASE_HREF to / or edit the build step.
+
+name: Deploy frontend (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Inject API URL for production build
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "Missing repository secret API_BASE_URL (Cloud Run URL, no trailing slash)."
+            exit 1
+          fi
+          sed -i "s#__API_BASE_URL_PLACEHOLDER__#${API_BASE_URL}#g" frontend/src/environments/environment.prod.ts
+
+      - name: Install and build
+        env:
+          BASE_HREF: ${{ vars.GH_PAGES_BASE_HREF }}
+        run: |
+          cd frontend
+          npm ci
+          if [ -n "$BASE_HREF" ]; then
+            HREF="$BASE_HREF"
+          else
+            HREF="/${GITHUB_REPOSITORY##*/}/"
+          fi
+          npm run build -- --configuration production --base-href "$HREF"
+
+      - name: SPA fallback (Angular routes on GitHub Pages)
+        run: cp frontend/dist/frontend/browser/index.html frontend/dist/frontend/browser/404.html
+
+      - name: Publish gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist/frontend/browser

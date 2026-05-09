@@ -51,9 +51,9 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	CorsConfigurationSource corsConfigurationSource() {
+	CorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
 		var config = new CorsConfiguration();
-		config.setAllowedOrigins(java.util.List.of("http://localhost:4200"));
+		config.setAllowedOrigins(corsProperties.originsList());
 		config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
 		config.setExposedHeaders(java.util.List.of("Authorization"));
