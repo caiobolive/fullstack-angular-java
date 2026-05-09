@@ -50,18 +50,33 @@ export class AuthService {
     this.accessTokenSig.set(accessToken);
   }
 
+  /** JWT `sub` (user id), when present. */
+  getUserId(): string | null {
+    const payload = this.decodeJwtPayload();
+    const sub = payload?.sub;
+    return typeof sub === 'string' ? sub : null;
+  }
+
   // Minimal JWT decoding (no verification client-side).
   getRoles(): string[] {
+    const payload = this.decodeJwtPayload();
+    const roles = payload?.roles;
+    return Array.isArray(roles) ? roles.filter((r): r is string => typeof r === 'string') : [];
+  }
+
+  private decodeJwtPayload(): { sub?: string; roles?: unknown } | null {
     const token = this.getAccessToken();
-    if (!token) return [];
+    if (!token) return null;
     const parts = token.split('.');
-    if (parts.length !== 3) return [];
+    if (parts.length !== 3) return null;
     try {
-      const payloadJson = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
-      const payload = JSON.parse(payloadJson) as { roles?: string[] };
-      return Array.isArray(payload.roles) ? payload.roles : [];
+      let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const pad = b64.length % 4;
+      if (pad) b64 += '='.repeat(4 - pad);
+      const payloadJson = atob(b64);
+      return JSON.parse(payloadJson) as { sub?: string; roles?: unknown };
     } catch {
-      return [];
+      return null;
     }
   }
 }

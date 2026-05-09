@@ -66,5 +66,25 @@ describe('AuthService', () => {
     service.refresh().subscribe({ error: (e) => (error = e) });
     expect(error).toBeTruthy();
   });
+
+  it('getUserId and getRoles decode access token payload', () => {
+    const token = makeJwt({ sub: 'user-uuid-1', roles: ['ROLE_ADMIN', 'ROLE_USER'] });
+    service.login({ email: 'a@b.com', password: 'x' }).subscribe();
+    httpMock.expectOne((r) => r.url.endsWith('/api/v1/auth/login')).flush({
+      accessToken: token,
+      refreshToken: 'r',
+      refreshTokenExpiresAt: new Date().toISOString()
+    });
+    expect(service.getUserId()).toBe('user-uuid-1');
+    expect(service.getRoles()).toEqual(['ROLE_ADMIN', 'ROLE_USER']);
+  });
 });
+
+function makeJwt(payload: { sub?: string; roles?: string[] }): string {
+  const enc = (obj: object) =>
+    btoa(JSON.stringify(obj))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+  return `${enc({ alg: 'none' })}.${enc(payload)}.x`;
+}
 
