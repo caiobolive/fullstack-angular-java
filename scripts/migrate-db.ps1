@@ -1,4 +1,4 @@
-# Aplica migrations Flyway (inclui V2: remove `items`, cria `clients`) sem subir o Spring Boot.
+# Aplica migrations Flyway (ex.: V2 tabela clients, V3 renomeia para customers) sem subir o Spring Boot.
 # Pré-requisito: Postgres acessível (ex.: Docker Compose em docker/ com .env).
 #
 # Uso (na raiz do repo ou de qualquer pasta):

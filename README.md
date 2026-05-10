@@ -25,7 +25,7 @@ Com o Postgres no ar:
 powershell -ExecutionPolicy Bypass -File scripts/migrate-db.ps1
 ```
 
-(Equivalente: ao iniciar o backend com `.\mvnw.cmd spring-boot:run`, o Flyway também roda automaticamente.) A migration `V2__clients_replace_items.sql` remove a tabela `items` e cria `clients`.
+(Equivalente: ao iniciar o backend com `.\mvnw.cmd spring-boot:run`, o Flyway também roda automaticamente.) A migration `V2__clients_replace_items.sql` remove `items` e cria a tabela intermediária `clients`; a `V3__customers_rename_from_clients.sql` renomeia para **`customers`** (API `/api/v1/customers`).
 
 ## Plano
 O plano completo está em `PLANO_PROJETO_FULLSTACK.md`.

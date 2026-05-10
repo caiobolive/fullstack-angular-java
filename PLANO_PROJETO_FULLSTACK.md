@@ -64,7 +64,7 @@ Fullstack/
 
 **Observação**: o `README.md` menciona `docs/` como pasta ideal; ela pode ser criada depois para ADRs/threat model.
 
-**Frontend (alvo descrito neste plano):** `features/clients/` (CRUD clientes), `features/auth/login/`, `features/users/` (admin), APIs em `src/app/api/` (`clients.api.ts`, `users.api.ts`, etc.).
+**Frontend (alvo descrito neste plano):** `features/customers/` (CRUD — inglês **customers**, UI em PT **clientes**), `features/auth/login/`, `features/users/` (admin), APIs em `src/app/api/` (`customers.api.ts`, `users.api.ts`, etc.).
 
 ---
 
@@ -130,8 +130,10 @@ docker compose up -d
 - `SecurityProperties`: binding tipado das propriedades JWT (issuer, TTLs, segredo HMAC).
 
 ### 5.3 Schema Flyway
-- `db/migration/V1__init.sql`: tabelas `users`, `user_roles`, **`clients`** (substituindo o antigo conceito de “items”), `refresh_tokens` + índices.
-- Tabela **`clients`** (modelo alinhado ao briefing de clientes + ownership):
+- `db/migration/V1__init.sql`: tabelas `users`, `user_roles`, `items` (legado), `refresh_tokens` + índices.
+- `db/migration/V2__clients_replace_items.sql`: remove `items` e cria **`clients`** com índice em `owner_id`.
+- `db/migration/V3__customers_rename_from_clients.sql`: renomeia **`clients` → `customers`** (API `/api/v1/customers`).
+- Tabela **`customers`** (modelo alinhado ao briefing + ownership):
   - Identificador UUID, **nome**, **e-mail**, **telefone**, **documento** (CPF ou CNPJ — um campo com validação no DTO ou dois campos mutuamente exclusivos, conforme decisão do projeto),
   - **`owner_id`** referenciando o usuário dono do registro (base das regras RBAC),
   - **`created_at`**, **`updated_at`** (listagem deve expor pelo menos uma data; recomenda-se mostrar ambas na UI).
@@ -139,7 +141,7 @@ docker compose up -d
 ### 5.4 Domínio
 - `Role` enum (`ROLE_ADMIN`, `ROLE_USER`).
 - `UserAccount` (`users` / `user_roles` como `@ElementCollection`).
-- **`Client`** (entidade JPA) com `ownerId` para ownership e campos do briefing (nome, email, telefone, documento, timestamps).
+- **`Customer`** (entidade JPA; inglês *customer*) com `ownerId` para ownership e campos do briefing (nome, email, telefone, documento, timestamps).
 - `RefreshToken` com `token_hash`, expiração e revogação.
 
 ### 5.5 Autenticação e tokens
@@ -160,7 +162,7 @@ docker compose up -d
 
 ### 5.7 Casos de uso e endpoints de negócio
 - `CurrentUser`: lê `JwtAuthenticationToken` → `requireUserId()`, `hasRole(...)`.
-- **`ClientService` + `ClientController` (`/api/v1/clients`)**:
+- **`CustomerService` + `CustomerController` (`/api/v1/customers`)**:
   - **Admin** lista/vê/edita/exclui **todos** os clientes.
   - **Usuário comum** lista/vê/edita/exclui apenas clientes com **`ownerId == sub`** do JWT (senão **403**).
 - `UserAdminService` + `UserController` (`/api/v1/users`, **somente admin**):
@@ -177,7 +179,7 @@ docker compose up -d
 
 ### 5.10 Testes backend
 - Testes rodam com **H2**, Flyway **desligado** em `src/test/resources/application.properties`, `ddl-auto=create-drop`.
-- Testes unitários de exemplo: `UserAdminServiceTest` (Mockito); incluir **`ClientService`** quando implementado.
+- Testes unitários de exemplo: `UserAdminServiceTest` (Mockito); incluir **`CustomerService`** quando implementado.
 - `BackendApplicationTests` sobe contexto (integração leve).
 
 **Peculiaridade**: warnings do Mockito sobre “inline mock maker” / Java agent podem aparecer no JDK 21 — são ruído conhecido até configurar o agent do Mockito conforme a documentação deles.
@@ -203,7 +205,7 @@ docker compose up -d
 
 ### 6.4 Features
 - **`login`**: página de login.
-- **`clients`** (rota sugerida **`/clients`**, redirect default da app pode apontar para ela): CRUD consumindo **`/api/v1/clients`** **ou** (somente para protótipo isolado) JSON local + serviço que simula API — preferência neste monorepo: **API real + JWT**, para valorizar interceptor/guards.
+- **`customers`** (rota **`/customers`**; legado **`/clients`** redireciona): CRUD consumindo **`/api/v1/customers`** **ou** (somente para protótipo isolado) JSON local + serviço que simula API — preferência neste monorepo: **API real + JWT**, para valorizar interceptor/guards.
 - **`users` (admin)**: lista, criar usuário, editar **roles/enabled** com `PATCH` (`UsersApi.update`).
 - **`app.component`**: navegação condicional (link **Usuários** só para admin).
 
@@ -236,7 +238,7 @@ Requisitos **já atendidos no monorepo como “plus”** em relação ao briefin
 - `GET /api/v1/health`
 
 ### Autenticado (Bearer access JWT)
-- `GET/POST/PUT/DELETE /api/v1/clients`
+- `GET/POST/PUT/DELETE /api/v1/customers`
 
 ### Autenticado + admin (`ROLE_ADMIN`)
 - `GET /api/v1/users`
@@ -252,19 +254,19 @@ Requisitos **já atendidos no monorepo como “plus”** em relação ao briefin
 ## 8) Testes e qualidade — expectativa realista
 
 ### Backend
-- Priorizar testes unitários em services (`AuthService`, **`ClientService`**, `UserAdminService`).
+- Priorizar testes unitários em services (`AuthService`, **`CustomerService`**, `UserAdminService`).
 - Adicionar `@WebMvcTest` pontuais para validação HTTP e códigos de status quando estabilizar contratos de erro.
 
 ### Frontend
 - Cobrir `AuthService`, interceptor, guards e APIs (`*.api.spec.ts`).
-- Feature **clientes**: specs do `clients.api`, formulário reativo (validações/mensagens), lista e fluxo de exclusão.
+- Feature **clientes** (código **customers**): specs do `customers.api`, formulário reativo (validações/mensagens), lista e fluxo de exclusão.
 - Definir meta de cobertura depois que Karma estiver estável na máquina/CI.
 
 ---
 
 ## 9) Performance e hardening (checklist evolutivo)
 
-- Paginação em listas grandes (`/users`, **`/clients`** para admin ou para todos quando volume crescer).
+- Paginação em listas grandes (`/users`, **`/customers`** para admin ou para todos quando volume crescer).
 - Problem Details (RFC7807) para erros uniformes.
 - Rate limiting e headers de segurança adicionais (produção).
 - Rotacionar segredos JWT via env/secrets manager (nunca commitar segredo real).
@@ -276,10 +278,10 @@ Requisitos **já atendidos no monorepo como “plus”** em relação ao briefin
 1. Instalar JDK 21, Node LTS, Docker Desktop (Windows: validar daemon rodando).
 2. Copiar `docker/.env.example` → `docker/.env` e ajustar senhas se necessário (alinhar ao Spring `application-dev` ou env `SPRING_DATASOURCE_*`).
 3. `docker compose up -d` dentro de `docker/`.
-4. Subir backend (`mvnw spring-boot:run` ou IDE) e confirmar Flyway aplicou migrations (schema com **`clients`**).
+4. Subir backend (`mvnw spring-boot:run` ou IDE) e confirmar Flyway aplicou migrations (schema com **`customers`**).
 5. Login com seed dev (`admin@example.com` / `admin123` se não mudou env).
-6. Subir frontend (`npm install`, `npm start`), testar fluxo login → **clientes** (`/clients`) → **usuários** (admin, `/users`).
-7. Postman: salvar access token e exercitar **`/api/v1/clients`** e **`/api/v1/users`**.
+6. Subir frontend (`npm install`, `npm start`), testar fluxo login → **clientes** (`/customers`) → **usuários** (admin, `/users`).
+7. Postman: salvar access token e exercitar **`/api/v1/customers`** e **`/api/v1/users`**.
 
 ---
 
@@ -306,13 +308,13 @@ Stack:
 
 Requisitos backend:
 - Pacotes: config, domain, infrastructure, application, web
-- Flyway migration inicial criando: users, user_roles (element collection), clients (nome, email, telefone, documento CPF ou CNPJ, owner_id UUID, timestamps), refresh_tokens
+- Flyway migrations criando: users, user_roles (element collection), customers (via clients em V2 + rename V3; nome, email, telefone, documento CPF ou CNPJ, owner_id UUID, timestamps), refresh_tokens
 - Endpoints:
   - POST /api/v1/auth/login, POST /api/v1/auth/refresh
   - GET /api/v1/health
-  - CRUD /api/v1/clients com regras:
-    - ADMIN lista/vê/edita/deleta todos os clientes
-    - USER lista/vê/edita/deleta apenas clientes com ownerId == sub do JWT
+  - CRUD /api/v1/customers com regras:
+    - ADMIN lista/vê/edita/deleta todos os registros
+    - USER lista/vê/edita/deleta apenas registros com ownerId == sub do JWT
   - Admin /api/v1/users:
     - GET list ordenado por email, GET by id, POST create (normalizar email; 409 duplicado; roles obrigatórias)
     - PATCH update enabled + roles com proteção anti auto-bloqueio (não desativar a si mesmo; não remover ROLE_ADMIN de si mesmo)
@@ -321,22 +323,22 @@ Requisitos backend:
   - Seed apenas profile dev criando admin padrão (email/senha configuráveis por env)
 
 Requisitos frontend:
-- Rotas lazy (standalone components): login, clients protegido por authGuard, users protegido por authGuard + roleGuard ROLE_ADMIN
-- Feature clients em /clients: listagem (nome, email, telefone, CPF ou CNPJ, data criação ou atualização), CRUD com Reactive Forms + validações e mensagens de erro; exclusão com confirmação; consumir /api/v1/clients (ou documentar JSON local apenas se for modo protótipo)
+- Rotas lazy (standalone components): login, customers (/customers; /clients pode redirecionar) protegido por authGuard, users protegido por authGuard + roleGuard ROLE_ADMIN
+- Feature customers em /customers: listagem (nome, email, telefone, CPF ou CNPJ, data criação ou atualização), CRUD com Reactive Forms + validações e mensagens de erro; exclusão com confirmação; consumir /api/v1/customers (ou documentar JSON local apenas se for modo protótipo)
 - Opcional: Angular Material para UI
 - TokenStorage localStorage simples
 - Interceptor com Bearer + refresh automático em 401
 - AuthService com decode mínimo de JWT para roles/sub (sem validar assinatura no browser)
-- Telas: login, clients CRUD, users admin (list/create/edit roles+enabled)
+- Telas: login, customers CRUD, users admin (list/create/edit roles+enabled)
 - Angular tests com Karma; usar Puppeteer para definir CHROME_BIN no karma.conf.js
 
 Testes:
-- Backend: H2 para testes, Flyway desligado nos testes com ddl-auto create-drop; testes unitários Mockito para services principais (Auth, Client, UserAdmin)
-- Frontend: specs para api clients/users, interceptor, guards, formulário clientes
+- Backend: H2 para testes, Flyway desligado nos testes com ddl-auto create-drop; testes unitários Mockito para services principais (Auth, Customer, UserAdmin)
+- Frontend: specs para api customers/users, interceptor, guards, formulário clientes
 
 Entrega:
 - README com como subir Postgres (docker/.env.example → docker/.env), backend e frontend; link repo e opcional deploy
 
-Siga uma ordem incremental: (1) compose + flyway + health, (2) auth login/refresh, (3) clients RBAC + ownership, (4) users admin, (5) frontend auth + clients + users, (6) testes mínimos.
+Siga uma ordem incremental: (1) compose + flyway + health, (2) auth login/refresh, (3) customers RBAC + ownership, (4) users admin, (5) frontend auth + customers + users, (6) testes mínimos.
 Pare após (2) para eu validar tokens no Postman.
 ```
