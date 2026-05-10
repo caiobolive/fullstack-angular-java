@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
+  <meta id="app-theme-color" name="theme-color" content="#0078d4" />
   <script>
     (function () {
       try {
@@ -12,6 +13,12 @@
         else if (p === 'light') dark = false;
         else dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (dark) document.documentElement.classList.add('app-dark-theme');
+        var meta = document.getElementById('app-theme-color');
+        if (meta)
+          meta.setAttribute(
+            'content',
+            dark ? '#89bcff' : '#0078d4'
+          );
       } catch (e) {}
     })();
   </script>

@@ -40,6 +40,8 @@ $app-dark-theme: mat.define-theme(
   --app-motion-duration-short: 180ms;
   --app-motion-duration-medium: 260ms;
   --app-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  /* Crossfade ao mudar claro/escuro (Etapa 6 — ThemeService) */
+  --app-theme-crossfade-duration: 320ms;
   @include mat.all-component-themes($app-light-theme);
 }
 
@@ -69,6 +71,21 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
+    transition:
+      background-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
+  }
+
+  body {
+    transition:
+      background-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
+  }
+
+  mat-toolbar.topbar {
+    transition:
+      background-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
   }
 }
 
@@ -107,6 +124,15 @@ body {
 
 .mat-mdc-card {
   transition: box-shadow calc(var(--app-motion-duration-medium) + 20ms) var(--app-motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mat-mdc-card {
+    transition:
+      box-shadow calc(var(--app-motion-duration-medium) + 20ms) var(--app-motion-easing-standard),
+      background-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
+  }
 }
 
 /* Campos de texto (outline): transição suave do contorno + estado focado */
