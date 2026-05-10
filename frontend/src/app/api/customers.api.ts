@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { APP_CONFIG } from '../core/config/app-config';
@@ -25,8 +25,13 @@ export interface CustomerUpsertRequest {
 export class CustomersApi {
   constructor(private readonly http: HttpClient) {}
 
-  list() {
-    return this.http.get<CustomerResponse[]>(`${APP_CONFIG.apiBaseUrl}/api/v1/customers`);
+  list(search?: string) {
+    const trimmed = search?.trim() ?? '';
+    let params = new HttpParams();
+    if (trimmed.length > 0) {
+      params = params.set('q', trimmed);
+    }
+    return this.http.get<CustomerResponse[]>(`${APP_CONFIG.apiBaseUrl}/api/v1/customers`, { params });
   }
 
   get(id: string) {

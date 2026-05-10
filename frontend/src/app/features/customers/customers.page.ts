@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
 
@@ -24,11 +26,21 @@ import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
           </div>
         </div>
 
+        <label class="search-field">
+          <span class="search-label">Buscar</span>
+          <input
+            type="search"
+            placeholder="Nome, e-mail, telefone ou documento…"
+            autocomplete="off"
+            [formControl]="searchControl"
+          />
+        </label>
+
         @if (error()) {
           <p class="error">{{ error() }}</p>
         }
 
-        @if (!loading() && customers().length === 0) {
+        @if (!loading() && customers().length === 0 && !activeSearch()) {
           <div class="empty-state" role="status">
             <p class="empty-title">Nenhum cliente cadastrado</p>
             <p class="empty-hint">
@@ -37,6 +49,11 @@ import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
             <button type="button" (click)="openCreate()" [disabled]="loading()">
               Cadastrar primeiro cliente
             </button>
+          </div>
+        } @else if (!loading() && customers().length === 0 && activeSearch()) {
+          <div class="empty-state" role="status">
+            <p class="empty-title">Nenhum resultado encontrado</p>
+            <p class="empty-hint">Ajuste o termo de busca ou limpe o campo para ver todos os clientes.</p>
           </div>
         } @else {
           <ul class="list">
@@ -182,6 +199,19 @@ import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
         gap: 8px;
         align-items: center;
       }
+      .search-field {
+        display: block;
+        margin-top: 14px;
+      }
+      .search-label {
+        display: block;
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+        color: #374151;
+      }
+      .search-field input[type='search'] {
+        max-width: 420px;
+      }
       .error {
         color: #b91c1c;
       }
@@ -272,8 +302,11 @@ export class CustomersPage {
   /** Formulário visível apenas após “Novo cliente” ou “Editar”. */
   readonly editorOpen = signal(false);
 
+  readonly searchControl = new FormControl('', { nonNullable: true });
+
   private readonly api = inject(CustomersApi);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly customerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -283,7 +316,14 @@ export class CustomersPage {
   });
 
   constructor() {
+    this.searchControl.valueChanges
+      .pipe(debounceTime(1000), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.reload());
     this.reload();
+  }
+
+  activeSearch(): boolean {
+    return this.searchControl.value.trim().length > 0;
   }
 
   showErr(ctrl: { invalid: boolean; touched: boolean; dirty: boolean }): boolean {
@@ -302,9 +342,10 @@ export class CustomersPage {
   }
 
   reload() {
+    const q = this.searchControl.value.trim();
     this.loading.set(true);
     this.error.set(null);
-    this.api.list().subscribe({
+    this.api.list(q || undefined).subscribe({
       next: (list) => {
         this.customers.set(list);
         this.loading.set(false);
