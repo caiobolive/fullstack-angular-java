@@ -2,294 +2,321 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
 
 @Component({
   selector: 'app-customers-page',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatDividerModule,
+    MatListModule,
+    MatProgressBarModule
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
-      <header class="header">
-        <h1>Clientes</h1>
-        <p class="muted">Cadastro com formulários reativos e validações.</p>
+      <header class="page-header">
+        <h1 class="mat-headline-medium page-title">Clientes</h1>
+        <p class="mat-body-medium muted">Cadastro com formulários reativos e validações.</p>
       </header>
 
-      <section class="card">
-        <div class="row">
-          <h2>Lista</h2>
+      <mat-card appearance="outlined" class="panel">
+        @if (loading()) {
+          <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
+        }
+
+        <mat-card-header class="panel-head">
+          <mat-card-title>Lista</mat-card-title>
           <div class="toolbar">
-            <button type="button" (click)="openCreate()" [disabled]="loading()">Novo cliente</button>
-            <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Recarregar</button>
-          </div>
-        </div>
-
-        <label class="search-field">
-          <span class="search-label">Buscar</span>
-          <input
-            type="search"
-            placeholder="Nome, e-mail, telefone ou documento…"
-            autocomplete="off"
-            [formControl]="searchControl"
-          />
-        </label>
-
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
-        }
-
-        @if (!loading() && customers().length === 0 && !activeSearch()) {
-          <div class="empty-state" role="status">
-            <p class="empty-title">Nenhum cliente cadastrado</p>
-            <p class="empty-hint">
-              Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
-            </p>
-            <button type="button" (click)="openCreate()" [disabled]="loading()">
-              Cadastrar primeiro cliente
+            <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
+              Novo cliente
             </button>
+            <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
           </div>
-        } @else if (!loading() && customers().length === 0 && activeSearch()) {
-          <div class="empty-state" role="status">
-            <p class="empty-title">Nenhum resultado encontrado</p>
-            <p class="empty-hint">Ajuste o termo de busca ou limpe o campo para ver todos os clientes.</p>
-          </div>
-        } @else {
-          <ul class="list">
-            @for (c of customers(); track c.id) {
-              <li class="item" [class.selected]="editorOpen() && selected()?.id === c.id">
-                <div class="meta">
-                  <strong>{{ c.name }}</strong>
-                  <small>{{ c.email }} · {{ c.phone }}</small>
-                  <small>Doc: {{ c.document }}</small>
-                  <small>Criado {{ c.createdAt | date: 'short' }} · Atualizado {{ c.updatedAt | date: 'short' }}</small>
-                  <small class="dim">Owner: {{ c.ownerId }}</small>
-                </div>
-                <div class="actions">
-                  <button type="button" class="secondary" (click)="openEdit(c.id)" [disabled]="loading()">
-                    Editar
-                  </button>
-                  <button type="button" class="danger" (click)="remove(c.id)" [disabled]="loading()">
-                    Excluir
-                  </button>
-                </div>
-              </li>
-            }
-          </ul>
-        }
-      </section>
+        </mat-card-header>
 
-      @if (editorOpen()) {
-        <section class="card detail">
-          <div class="row">
-            <h2>{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
-            <button type="button" class="secondary" (click)="clearSelection()" [disabled]="loading()">
-              Voltar à lista
-            </button>
-          </div>
-          @if (selected(); as sel) {
-            <p class="muted">
-              ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
-            </p>
+        <mat-card-content class="panel-body">
+          <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+            <mat-label>Buscar</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              type="search"
+              placeholder="Nome, e-mail, telefone ou documento…"
+              autocomplete="off"
+              [formControl]="searchControl"
+            />
+          </mat-form-field>
+
+          @if (error()) {
+            <p class="banner-error mat-body-medium" role="alert">{{ error() }}</p>
           }
-          <form class="form-grid" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
-            <label>
-              <span>Nome *</span>
-              <input type="text" formControlName="name" autocomplete="name" />
-              @if (showErr(customerForm.controls.name)) {
-                <small class="field-error">{{ errMsg(customerForm.controls.name, 'Nome') }}</small>
-              }
-            </label>
-            <label>
-              <span>E-mail *</span>
-              <input type="email" formControlName="email" autocomplete="email" />
-              @if (showErr(customerForm.controls.email)) {
-                <small class="field-error">{{ errMsg(customerForm.controls.email, 'E-mail') }}</small>
-              }
-            </label>
-            <label>
-              <span>Telefone *</span>
-              <input type="text" formControlName="phone" autocomplete="tel" />
-              @if (showErr(customerForm.controls.phone)) {
-                <small class="field-error">{{ errMsg(customerForm.controls.phone, 'Telefone') }}</small>
-              }
-            </label>
-            <label>
-              <span>CPF ou CNPJ *</span>
-              <input type="text" formControlName="document" />
-              @if (showErr(customerForm.controls.document)) {
-                <small class="field-error">{{ errMsg(customerForm.controls.document, 'Documento') }}</small>
-              }
-            </label>
-            <div class="actions-row">
-              <button type="submit" [disabled]="customerForm.invalid || loading()">
-                {{ selected() ? 'Salvar' : 'Cadastrar' }}
+
+          @if (!loading() && customers().length === 0 && !activeSearch()) {
+            <div class="empty-state" role="status">
+              <p class="empty-title mat-body-large">Nenhum cliente cadastrado</p>
+              <p class="empty-hint mat-body-medium">
+                Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
+              </p>
+              <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
+                Cadastrar primeiro cliente
               </button>
             </div>
-          </form>
-        </section>
+          } @else if (!loading() && customers().length === 0 && activeSearch()) {
+            <div class="empty-state" role="status">
+              <p class="empty-title mat-body-large">Nenhum resultado encontrado</p>
+              <p class="empty-hint mat-body-medium">
+                Ajuste o termo de busca ou limpe o campo para ver todos os clientes.
+              </p>
+            </div>
+          } @else {
+            <mat-list class="customer-list">
+              @for (c of customers(); track c.id; let last = $last) {
+                <mat-list-item
+                  lines="3"
+                  class="customer-item"
+                  [class.customer-item-selected]="editorOpen() && selected()?.id === c.id"
+                >
+                  <div matListItemTitle>{{ c.name }}</div>
+                  <div matListItemLine>{{ c.email }} · {{ c.phone }}</div>
+                  <div matListItemLine class="dim-line">
+                    Doc: {{ c.document }} · Criado {{ c.createdAt | date: 'short' }} · Atualizado
+                    {{ c.updatedAt | date: 'short' }} · Owner: {{ c.ownerId }}
+                  </div>
+                  <div matListItemMeta class="item-actions">
+                    <button mat-stroked-button type="button" (click)="openEdit(c.id)" [disabled]="loading()">
+                      Editar
+                    </button>
+                    <button mat-flat-button color="warn" type="button" (click)="remove(c.id)" [disabled]="loading()">
+                      Excluir
+                    </button>
+                  </div>
+                </mat-list-item>
+                @if (!last) {
+                  <mat-divider />
+                }
+              }
+            </mat-list>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      @if (editorOpen()) {
+        <mat-card appearance="outlined" class="panel editor">
+          <mat-card-content>
+            <div class="editor-toolbar">
+              <h2 class="mat-headline-small editor-title">{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
+              <button mat-stroked-button type="button" (click)="clearSelection()" [disabled]="loading()">
+                Voltar à lista
+              </button>
+            </div>
+
+            @if (selected(); as sel) {
+              <p class="meta-sub mat-body-small">
+                ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
+              </p>
+            }
+
+            <form class="form-grid" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
+              <mat-form-field appearance="outline">
+                <mat-label>Nome</mat-label>
+                <input matInput type="text" formControlName="name" autocomplete="name" />
+                @if (showErr(customerForm.controls.name)) {
+                  <mat-error>{{ errMsg(customerForm.controls.name, 'Nome') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>E-mail</mat-label>
+                <input matInput type="email" formControlName="email" autocomplete="email" />
+                @if (showErr(customerForm.controls.email)) {
+                  <mat-error>{{ errMsg(customerForm.controls.email, 'E-mail') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Telefone</mat-label>
+                <input matInput type="text" formControlName="phone" autocomplete="tel" />
+                @if (showErr(customerForm.controls.phone)) {
+                  <mat-error>{{ errMsg(customerForm.controls.phone, 'Telefone') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>CPF ou CNPJ</mat-label>
+                <input matInput type="text" formControlName="document" />
+                @if (showErr(customerForm.controls.document)) {
+                  <mat-error>{{ errMsg(customerForm.controls.document, 'Documento') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="actions-row">
+                <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || loading()">
+                  {{ selected() ? 'Salvar' : 'Cadastrar' }}
+                </button>
+              </div>
+            </form>
+          </mat-card-content>
+        </mat-card>
       }
     </div>
   `,
   styles: [
     `
       .page {
+        width: 100%;
         max-width: 960px;
-        margin: 24px auto;
-        padding: 0 16px;
-        display: grid;
+        margin-inline: auto;
+        display: flex;
+        flex-direction: column;
         gap: 16px;
       }
-      .header .muted {
+
+      .page-header .muted {
         margin: 4px 0 0;
-        color: #6b7280;
-        font-size: 0.9rem;
+        color: var(--mat-sys-on-surface-variant);
       }
-      .card {
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 16px;
-        background: #fff;
+
+      .panel {
+        overflow: hidden;
       }
-      .form-grid {
-        display: grid;
-        gap: 12px;
-        margin-top: 8px;
+
+      .panel mat-progress-bar {
+        border-radius: 12px 12px 0 0;
       }
-      label span {
-        display: block;
-        font-size: 0.85rem;
-        margin-bottom: 4px;
-        color: #374151;
-      }
-      input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        box-sizing: border-box;
-      }
-      .actions-row {
+
+      .panel-head {
         display: flex;
-        gap: 8px;
+        flex-wrap: wrap;
         align-items: center;
-      }
-      button {
-        padding: 10px 14px;
-        border: 0;
-        border-radius: 10px;
-        background: #111827;
-        color: #fff;
-        cursor: pointer;
-      }
-      button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .row {
-        display: flex;
         justify-content: space-between;
-        align-items: center;
         gap: 12px;
+        padding-top: 8px;
       }
+
       .toolbar {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
         align-items: center;
       }
+
+      .panel-body {
+        padding-top: 8px !important;
+      }
+
       .search-field {
-        display: block;
-        margin-top: 14px;
+        width: 100%;
+        max-width: 440px;
+        margin-bottom: 8px;
       }
-      .search-label {
-        display: block;
-        font-size: 0.85rem;
-        margin-bottom: 6px;
-        color: #374151;
+
+      .banner-error {
+        margin: 8px 0;
+        color: var(--mat-sys-error);
       }
-      .search-field input[type='search'] {
-        max-width: 420px;
-      }
-      .error {
-        color: #b91c1c;
-      }
-      .field-error {
-        display: block;
-        color: #b91c1c;
-        margin-top: 4px;
-        font-size: 0.8rem;
-      }
+
       .empty-state {
         margin-top: 16px;
         padding: 28px 20px;
-        border: 1px dashed #d1d5db;
+        border: 1px dashed var(--mat-sys-outline-variant);
         border-radius: 12px;
         text-align: center;
-        background: #f9fafb;
+        background-color: var(--mat-sys-surface-container-low);
       }
+
       .empty-title {
         margin: 0;
-        font-size: 1.05rem;
         font-weight: 600;
-        color: #111827;
       }
+
       .empty-hint {
         margin: 8px auto 16px;
         max-width: 360px;
-        color: #6b7280;
-        font-size: 0.9rem;
+        color: var(--mat-sys-on-surface-variant);
         line-height: 1.45;
       }
-      .list {
-        list-style: none;
+
+      .customer-list {
         padding: 0;
-        margin: 12px 0 0;
-        display: grid;
-        gap: 10px;
+        margin-top: 8px;
       }
-      .item {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        border: 1px solid #f3f4f6;
-        border-radius: 12px;
-        padding: 12px;
-        flex-wrap: wrap;
-      }
-      .meta {
-        display: grid;
-        gap: 4px;
-        min-width: 200px;
-      }
-      .meta small {
-        color: #4b5563;
-      }
-      .meta .dim {
-        color: #9ca3af;
-        font-size: 0.75rem;
-      }
-      .danger {
-        background: #b91c1c;
-      }
-      .secondary {
-        background: #374151;
-      }
-      .actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+
+      .customer-item {
+        height: auto !important;
+        min-height: 72px;
         align-items: flex-start;
       }
-      .item.selected {
-        border-color: #93c5fd;
-        background: #eff6ff;
+
+      .customer-item ::ng-deep .mat-mdc-list-item-meta {
+        align-self: center;
       }
-      .detail .muted {
+
+      .dim-line {
+        color: var(--mat-sys-on-surface-variant);
+        font-size: 0.8rem;
+      }
+
+      .item-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .customer-item-selected {
+        background-color: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+      }
+
+      .editor-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .editor-title {
+        margin: 0;
+      }
+
+      .meta-sub {
         margin: 0 0 12px;
-        color: #6b7280;
-        font-size: 0.875rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .form-grid mat-form-field {
+        width: 100%;
+      }
+
+      .actions-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
       }
     `
   ]
