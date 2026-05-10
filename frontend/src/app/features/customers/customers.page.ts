@@ -13,9 +13,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
+import { editorPanelAnimations } from '../../shared/animations/editor-panel.animations';
 
 @Component({
   selector: 'app-customers-page',
+  animations: [editorPanelAnimations],
   imports: [
     ReactiveFormsModule,
     DatePipe,
@@ -118,62 +120,64 @@ import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
       </mat-card>
 
       @if (editorOpen()) {
-        <mat-card appearance="outlined" class="panel editor">
-          <mat-card-content>
-            <div class="editor-toolbar">
-              <h2 class="mat-headline-small editor-title">{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
-              <button mat-stroked-button type="button" (click)="clearSelection()" [disabled]="loading()">
-                Voltar à lista
-              </button>
-            </div>
-
-            @if (selected(); as sel) {
-              <p class="meta-sub mat-body-small">
-                ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
-              </p>
-            }
-
-            <form class="form-grid" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
-              <mat-form-field appearance="outline">
-                <mat-label>Nome</mat-label>
-                <input matInput type="text" formControlName="name" autocomplete="name" />
-                @if (showErr(customerForm.controls.name)) {
-                  <mat-error>{{ errMsg(customerForm.controls.name, 'Nome') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>E-mail</mat-label>
-                <input matInput type="email" formControlName="email" autocomplete="email" />
-                @if (showErr(customerForm.controls.email)) {
-                  <mat-error>{{ errMsg(customerForm.controls.email, 'E-mail') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Telefone</mat-label>
-                <input matInput type="text" formControlName="phone" autocomplete="tel" />
-                @if (showErr(customerForm.controls.phone)) {
-                  <mat-error>{{ errMsg(customerForm.controls.phone, 'Telefone') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>CPF ou CNPJ</mat-label>
-                <input matInput type="text" formControlName="document" />
-                @if (showErr(customerForm.controls.document)) {
-                  <mat-error>{{ errMsg(customerForm.controls.document, 'Documento') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <div class="actions-row">
-                <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || loading()">
-                  {{ selected() ? 'Salvar' : 'Cadastrar' }}
+        <div class="editor-host" [@editorPanel]>
+          <mat-card appearance="outlined" class="panel editor">
+            <mat-card-content>
+              <div class="editor-toolbar">
+                <h2 class="mat-headline-small editor-title">{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
+                <button mat-stroked-button type="button" (click)="clearSelection()" [disabled]="loading()">
+                  Voltar à lista
                 </button>
               </div>
-            </form>
-          </mat-card-content>
-        </mat-card>
+
+              @if (selected(); as sel) {
+                <p class="meta-sub mat-body-small">
+                  ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
+                </p>
+              }
+
+              <form class="form-grid" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nome</mat-label>
+                  <input matInput type="text" formControlName="name" autocomplete="name" />
+                  @if (showErr(customerForm.controls.name)) {
+                    <mat-error>{{ errMsg(customerForm.controls.name, 'Nome') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>E-mail</mat-label>
+                  <input matInput type="email" formControlName="email" autocomplete="email" />
+                  @if (showErr(customerForm.controls.email)) {
+                    <mat-error>{{ errMsg(customerForm.controls.email, 'E-mail') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Telefone</mat-label>
+                  <input matInput type="text" formControlName="phone" autocomplete="tel" />
+                  @if (showErr(customerForm.controls.phone)) {
+                    <mat-error>{{ errMsg(customerForm.controls.phone, 'Telefone') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>CPF ou CNPJ</mat-label>
+                  <input matInput type="text" formControlName="document" />
+                  @if (showErr(customerForm.controls.document)) {
+                    <mat-error>{{ errMsg(customerForm.controls.document, 'Documento') }}</mat-error>
+                  }
+                </mat-form-field>
+
+                <div class="actions-row">
+                  <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || loading()">
+                    {{ selected() ? 'Salvar' : 'Cadastrar' }}
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </div>
       }
     </div>
   `,
@@ -317,6 +321,11 @@ import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
         gap: 8px;
         align-items: center;
         margin-top: 8px;
+      }
+
+      .editor-host {
+        display: block;
+        width: 100%;
       }
     `
   ]

@@ -20,6 +20,10 @@ $app-theme: mat.define-theme(
 
 :root {
   color-scheme: light;
+  /* Tokens de motion (alinhar com `route-animations.ts` onde aplicável) */
+  --app-motion-duration-short: 180ms;
+  --app-motion-duration-medium: 260ms;
+  --app-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   @include mat.all-component-themes($app-theme);
 }
 
@@ -41,17 +45,106 @@ body {
   box-sizing: border-box;
 }
 
-/* Micro-motion global suave (Material motion como referência de easing/duração) */
-.mat-mdc-button,
-.mat-mdc-raised-button,
-.mat-mdc-outlined-button,
-.mat-mdc-unelevated-button {
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Botões Material — cobre text / raised / stroked / flat / ícone (host comum `.mat-mdc-button-base`) */
+.mat-mdc-button-base {
   transition:
-    background-color 200ms cubic-bezier(0.2, 0, 0, 1),
-    color 200ms cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+    background-color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
+    color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
+    border-color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
+    box-shadow var(--app-motion-duration-medium) var(--app-motion-easing-standard),
+    transform var(--app-motion-duration-short) var(--app-motion-easing-standard),
+    filter var(--app-motion-duration-short) var(--app-motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mat-mdc-button-base:not(:disabled):hover {
+    filter: brightness(1.04);
+  }
+
+  .mat-mdc-button-base:not(:disabled):active {
+    transform: scale(0.98);
+    filter: brightness(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mat-mdc-button-base:not(:disabled):active {
+    transform: none;
+    filter: none;
+  }
+
+  .mat-mdc-button-base:not(:disabled):hover {
+    filter: none;
+  }
 }
 
 .mat-mdc-card {
-  transition: box-shadow 220ms cubic-bezier(0.2, 0, 0, 1);
+  transition: box-shadow calc(var(--app-motion-duration-medium) + 20ms) var(--app-motion-easing-standard);
+}
+
+/* Campos de texto (outline): transição suave do contorno + estado focado */
+.mat-mdc-form-field {
+  transition:
+    opacity var(--app-motion-duration-short) var(--app-motion-easing-standard),
+    transform var(--app-motion-duration-short) var(--app-motion-easing-standard);
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  transition: box-shadow var(--app-motion-duration-medium) var(--app-motion-easing-standard);
+}
+
+.mat-mdc-form-field .mat-mdc-notched-outline .mat-mdc-notched-outline-leading,
+.mat-mdc-form-field .mat-mdc-notched-outline .mat-mdc-notched-outline-notch,
+.mat-mdc-form-field .mat-mdc-notched-outline .mat-mdc-notched-outline-trailing {
+  transition: border-color var(--app-motion-duration-medium) var(--app-motion-easing-standard);
+}
+
+.mat-mdc-form-field .mat-mdc-input-element {
+  transition: color var(--app-motion-duration-short) var(--app-motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+    transform: translateY(-1px);
+  }
+
+  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) .mat-mdc-text-field-wrapper {
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mat-mdc-form-field.mat-focused {
+    transform: none;
+  }
+
+  .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+    box-shadow: none;
+  }
+}
+
+/* Checkboxes — feedback ao interagir */
+.mat-mdc-checkbox {
+  transition:
+    opacity var(--app-motion-duration-short) var(--app-motion-easing-standard),
+    transform var(--app-motion-duration-short) var(--app-motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mat-mdc-checkbox:active:not(.mat-mdc-checkbox-disabled) {
+    transform: scale(0.97);
+  }
+}
+
+a.mat-mdc-button-base.nav-active {
+  transition:
+    background-color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
+    color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
+    filter var(--app-motion-duration-short) var(--app-motion-easing-standard);
 }

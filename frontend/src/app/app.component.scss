@@ -49,3 +49,15 @@
   padding: 0 16px;
   width: 100%;
 }
+
+/* Pilha em grid: mesma célula para crossfade + altura = ao maior dos dois em transição */
+.route-viewport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  isolation: isolate;
+
+  router-outlet {
+    display: contents;
+  }
+}

@@ -4,10 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { AuthService } from './core/auth/auth.service';
+import { routeAnimations } from './route-animations';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule],
+  animations: [routeAnimations],
   template: `
     <div class="app-shell">
       <mat-toolbar color="primary" class="topbar">
@@ -39,7 +41,13 @@ import { AuthService } from './core/auth/auth.service';
 
       <main class="content">
         <div class="content-inner">
-          <router-outlet />
+          <div
+            class="route-viewport"
+            [@routeAnimations]="prepareRoute(outlet)"
+            [@.disabled]="routeAnimationsDisabled"
+          >
+            <router-outlet #outlet="outlet" />
+          </div>
         </div>
       </main>
     </div>
@@ -47,10 +55,23 @@ import { AuthService } from './core/auth/auth.service';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
+  /** Desativa animações de rota quando o utilizador prefere menos movimento. */
+  readonly routeAnimationsDisabled =
+    typeof globalThis.matchMedia === 'function' &&
+    globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   constructor(
     public readonly auth: AuthService,
     private readonly router: Router
   ) {}
+
+  prepareRoute(outlet: RouterOutlet): string {
+    if (!outlet.isActivated) {
+      return '';
+    }
+    const key = outlet.activatedRoute.snapshot.data['animation'];
+    return typeof key === 'string' ? key : '';
+  }
 
   logout(): void {
     this.auth.logout();

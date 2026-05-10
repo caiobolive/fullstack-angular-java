@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { CustomersPage } from './customers.page';
 
@@ -31,7 +32,7 @@ describe('CustomersPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CustomersPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideAnimations()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CustomersPage);

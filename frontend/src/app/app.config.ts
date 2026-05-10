@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withHashLocation } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
@@ -10,8 +10,11 @@ import { authInterceptor } from './core/auth/auth.interceptor';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    /** Angular Material motion + eventual `@angular/animations` API — carrega o bundle async (Etapa 1). */
-    provideAnimationsAsync(),
+    /**
+     * Material + triggers `@angular/animations` (ex.: transições de rota).
+     * `provideAnimationsAsync()` pode adiar o motor até ao lazy-load do chunk — as animações de rota ficavam impercetíveis.
+     */
+    provideAnimations(),
     provideRouter(routes, ...(environment.production ? [withHashLocation()] : [])),
     provideHttpClient(withInterceptors([authInterceptor]))
   ]
