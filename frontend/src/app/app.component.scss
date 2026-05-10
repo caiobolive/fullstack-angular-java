@@ -8,6 +8,8 @@
   position: sticky;
   top: 0;
   z-index: 16;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 .toolbar-spacer {
@@ -15,6 +17,7 @@
 }
 
 .brand-link {
+  margin-inline-start: -8px;
   text-decoration: none;
 }
 
@@ -31,11 +34,18 @@
 }
 
 .nav-active {
-  background-color: color-mix(in srgb, var(--mat-sys-on-primary) 14%, transparent);
+  background-color: color-mix(in srgb, var(--mat-sys-on-primary) 18%, transparent);
   border-radius: 999px;
 }
 
 .content {
   flex: 1;
-  padding: 16px 0 32px;
+  padding: 16px 0 40px;
+}
+
+.content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  width: 100%;
 }
