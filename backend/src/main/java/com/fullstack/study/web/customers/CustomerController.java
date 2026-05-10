@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -31,8 +32,8 @@ public class CustomerController {
 	}
 
 	@GetMapping
-	public List<CustomerResponse> list() {
-		return customerService.list().stream().map(CustomerController::toResponse).toList();
+	public List<CustomerResponse> list(@RequestParam(name = "q", required = false) String q) {
+		return customerService.list(q).stream().map(CustomerController::toResponse).toList();
 	}
 
 	@GetMapping("/{id}")

@@ -21,11 +21,30 @@ public class CustomerService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<Customer> list() {
-		if (currentUser.hasRole("ROLE_ADMIN")) {
-			return customerRepository.findAll();
+	public List<Customer> list(String query) {
+		String term = normalizeSearch(query);
+		if (term.isEmpty()) {
+			if (currentUser.hasRole("ROLE_ADMIN")) {
+				return customerRepository.findAll();
+			}
+			return customerRepository.findAllByOwnerId(currentUser.requireUserId());
 		}
-		return customerRepository.findAllByOwnerId(currentUser.requireUserId());
+		if (currentUser.hasRole("ROLE_ADMIN")) {
+			return customerRepository.searchAll(term);
+		}
+		return customerRepository.searchByOwnerId(currentUser.requireUserId(), term);
+	}
+
+	/** Remove curingas LIKE (% _) e limita tamanho para evitar consultas abusivas. */
+	static String normalizeSearch(String raw) {
+		if (raw == null) {
+			return "";
+		}
+		String t = raw.trim();
+		if (t.length() > 200) {
+			t = t.substring(0, 200);
+		}
+		return t.replace("\\", "").replace("%", "").replace("_", "");
 	}
 
 	@Transactional(readOnly = true)
