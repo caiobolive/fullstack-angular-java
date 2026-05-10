@@ -16,121 +16,103 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
       </header>
 
       <section class="card">
-        <h2>Novo cliente</h2>
-        <form class="form-grid" [formGroup]="form" (ngSubmit)="create()">
-          <label>
-            <span>Nome *</span>
-            <input type="text" formControlName="name" autocomplete="name" />
-            @if (showErr(form.controls.name)) {
-              <small class="field-error">{{ errMsg(form.controls.name, 'Nome') }}</small>
-            }
-          </label>
-          <label>
-            <span>E-mail *</span>
-            <input type="email" formControlName="email" autocomplete="email" />
-            @if (showErr(form.controls.email)) {
-              <small class="field-error">{{ errMsg(form.controls.email, 'E-mail') }}</small>
-            }
-          </label>
-          <label>
-            <span>Telefone *</span>
-            <input type="text" formControlName="phone" autocomplete="tel" />
-            @if (showErr(form.controls.phone)) {
-              <small class="field-error">{{ errMsg(form.controls.phone, 'Telefone') }}</small>
-            }
-          </label>
-          <label>
-            <span>CPF ou CNPJ *</span>
-            <input type="text" formControlName="document" />
-            @if (showErr(form.controls.document)) {
-              <small class="field-error">{{ errMsg(form.controls.document, 'Documento') }}</small>
-            }
-          </label>
-          <div class="actions-row">
-            <button type="submit" [disabled]="form.invalid || loading()">Cadastrar</button>
-          </div>
-        </form>
-      </section>
-
-      @if (selected(); as sel) {
-        <section class="card detail">
-          <div class="row">
-            <h2>Editar cliente</h2>
-            <button type="button" class="secondary" (click)="clearSelection()" [disabled]="loading()">
-              Fechar
-            </button>
-          </div>
-          <p class="muted">
-            ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
-          </p>
-          <form class="form-grid" [formGroup]="editForm" (ngSubmit)="saveEdit()">
-            <label>
-              <span>Nome *</span>
-              <input type="text" formControlName="name" />
-              @if (showErr(editForm.controls.name)) {
-                <small class="field-error">{{ errMsg(editForm.controls.name, 'Nome') }}</small>
-              }
-            </label>
-            <label>
-              <span>E-mail *</span>
-              <input type="email" formControlName="email" />
-              @if (showErr(editForm.controls.email)) {
-                <small class="field-error">{{ errMsg(editForm.controls.email, 'E-mail') }}</small>
-              }
-            </label>
-            <label>
-              <span>Telefone *</span>
-              <input type="text" formControlName="phone" />
-              @if (showErr(editForm.controls.phone)) {
-                <small class="field-error">{{ errMsg(editForm.controls.phone, 'Telefone') }}</small>
-              }
-            </label>
-            <label>
-              <span>CPF ou CNPJ *</span>
-              <input type="text" formControlName="document" />
-              @if (showErr(editForm.controls.document)) {
-                <small class="field-error">{{ errMsg(editForm.controls.document, 'Documento') }}</small>
-              }
-            </label>
-            <div class="actions-row">
-              <button type="submit" [disabled]="editForm.invalid || loading()">Salvar</button>
-            </div>
-          </form>
-        </section>
-      }
-
-      <section class="card">
         <div class="row">
           <h2>Lista</h2>
-          <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Recarregar</button>
+          <div class="toolbar">
+            <button type="button" (click)="openCreate()" [disabled]="loading()">Novo cliente</button>
+            <button type="button" class="secondary" (click)="reload()" [disabled]="loading()">Recarregar</button>
+          </div>
         </div>
 
         @if (error()) {
           <p class="error">{{ error() }}</p>
         }
 
-        <ul class="list">
-          @for (c of clients(); track c.id) {
-            <li class="item" [class.selected]="selected()?.id === c.id">
-              <div class="meta">
-                <strong>{{ c.name }}</strong>
-                <small>{{ c.email }} · {{ c.phone }}</small>
-                <small>Doc: {{ c.document }}</small>
-                <small>Criado {{ c.createdAt | date: 'short' }} · Atualizado {{ c.updatedAt | date: 'short' }}</small>
-                <small class="dim">Owner: {{ c.ownerId }}</small>
-              </div>
-              <div class="actions">
-                <button type="button" class="secondary" (click)="openEdit(c.id)" [disabled]="loading()">
-                  Editar
-                </button>
-                <button type="button" class="danger" (click)="remove(c.id)" [disabled]="loading()">
-                  Excluir
-                </button>
-              </div>
-            </li>
-          }
-        </ul>
+        @if (!loading() && clients().length === 0) {
+          <div class="empty-state" role="status">
+            <p class="empty-title">Nenhum cliente cadastrado</p>
+            <p class="empty-hint">
+              Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
+            </p>
+            <button type="button" (click)="openCreate()" [disabled]="loading()">
+              Cadastrar primeiro cliente
+            </button>
+          </div>
+        } @else {
+          <ul class="list">
+            @for (c of clients(); track c.id) {
+              <li class="item" [class.selected]="editorOpen() && selected()?.id === c.id">
+                <div class="meta">
+                  <strong>{{ c.name }}</strong>
+                  <small>{{ c.email }} · {{ c.phone }}</small>
+                  <small>Doc: {{ c.document }}</small>
+                  <small>Criado {{ c.createdAt | date: 'short' }} · Atualizado {{ c.updatedAt | date: 'short' }}</small>
+                  <small class="dim">Owner: {{ c.ownerId }}</small>
+                </div>
+                <div class="actions">
+                  <button type="button" class="secondary" (click)="openEdit(c.id)" [disabled]="loading()">
+                    Editar
+                  </button>
+                  <button type="button" class="danger" (click)="remove(c.id)" [disabled]="loading()">
+                    Excluir
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
       </section>
+
+      @if (editorOpen()) {
+        <section class="card detail">
+          <div class="row">
+            <h2>{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
+            <button type="button" class="secondary" (click)="clearSelection()" [disabled]="loading()">
+              Voltar à lista
+            </button>
+          </div>
+          @if (selected(); as sel) {
+            <p class="muted">
+              ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
+            </p>
+          }
+          <form class="form-grid" [formGroup]="clientForm" (ngSubmit)="submitClientForm()">
+            <label>
+              <span>Nome *</span>
+              <input type="text" formControlName="name" autocomplete="name" />
+              @if (showErr(clientForm.controls.name)) {
+                <small class="field-error">{{ errMsg(clientForm.controls.name, 'Nome') }}</small>
+              }
+            </label>
+            <label>
+              <span>E-mail *</span>
+              <input type="email" formControlName="email" autocomplete="email" />
+              @if (showErr(clientForm.controls.email)) {
+                <small class="field-error">{{ errMsg(clientForm.controls.email, 'E-mail') }}</small>
+              }
+            </label>
+            <label>
+              <span>Telefone *</span>
+              <input type="text" formControlName="phone" autocomplete="tel" />
+              @if (showErr(clientForm.controls.phone)) {
+                <small class="field-error">{{ errMsg(clientForm.controls.phone, 'Telefone') }}</small>
+              }
+            </label>
+            <label>
+              <span>CPF ou CNPJ *</span>
+              <input type="text" formControlName="document" />
+              @if (showErr(clientForm.controls.document)) {
+                <small class="field-error">{{ errMsg(clientForm.controls.document, 'Documento') }}</small>
+              }
+            </label>
+            <div class="actions-row">
+              <button type="submit" [disabled]="clientForm.invalid || loading()">
+                {{ selected() ? 'Salvar' : 'Cadastrar' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      }
     </div>
   `,
   styles: [
@@ -194,6 +176,12 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
         align-items: center;
         gap: 12px;
       }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
       .error {
         color: #b91c1c;
       }
@@ -202,6 +190,27 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
         color: #b91c1c;
         margin-top: 4px;
         font-size: 0.8rem;
+      }
+      .empty-state {
+        margin-top: 16px;
+        padding: 28px 20px;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+        text-align: center;
+        background: #f9fafb;
+      }
+      .empty-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #111827;
+      }
+      .empty-hint {
+        margin: 8px auto 16px;
+        max-width: 360px;
+        color: #6b7280;
+        font-size: 0.9rem;
+        line-height: 1.45;
       }
       .list {
         list-style: none;
@@ -260,18 +269,13 @@ export class ClientsPage {
   readonly error = signal<string | null>(null);
   readonly clients = signal<ClientResponse[]>([]);
   readonly selected = signal<ClientResponse | null>(null);
+  /** Formulário visível apenas após “Novo cliente” ou “Editar”. */
+  readonly editorOpen = signal(false);
 
   private readonly api = inject(ClientsApi);
   private readonly fb = inject(FormBuilder);
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(200)]],
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
-    phone: ['', [Validators.required, Validators.maxLength(30)]],
-    document: ['', [Validators.required, Validators.minLength(11), Validators.maxLength(18)]]
-  });
-
-  readonly editForm = this.fb.nonNullable.group({
+  readonly clientForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
     phone: ['', [Validators.required, Validators.maxLength(30)]],
@@ -316,13 +320,20 @@ export class ClientsPage {
     });
   }
 
+  openCreate(): void {
+    this.editorOpen.set(true);
+    this.selected.set(null);
+    this.clientForm.reset({ name: '', email: '', phone: '', document: '' });
+  }
+
   openEdit(id: string) {
     this.loading.set(true);
     this.error.set(null);
     this.api.get(id).subscribe({
       next: (c) => {
         this.selected.set(c);
-        this.editForm.reset({
+        this.editorOpen.set(true);
+        this.clientForm.reset({
           name: c.name,
           email: c.email,
           phone: c.phone,
@@ -338,43 +349,42 @@ export class ClientsPage {
   }
 
   clearSelection(): void {
+    this.editorOpen.set(false);
     this.selected.set(null);
-    this.editForm.reset({ name: '', email: '', phone: '', document: '' });
+    this.clientForm.reset({ name: '', email: '', phone: '', document: '' });
   }
 
-  saveEdit() {
+  submitClientForm() {
     const row = this.selected();
-    if (!row || this.editForm.invalid) return;
-    this.loading.set(true);
-    this.error.set(null);
-    const v = this.editForm.getRawValue();
-    this.api.update(row.id, v).subscribe({
-      next: (updated) => {
-        this.selected.set(updated);
-        this.reload();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set('Falha ao atualizar cliente.');
-      }
-    });
-  }
-
-  create() {
-    if (this.form.invalid) return;
-    this.loading.set(true);
-    this.error.set(null);
-    const v = this.form.getRawValue();
-    this.api.create(v).subscribe({
-      next: () => {
-        this.form.reset({ name: '', email: '', phone: '', document: '' });
-        this.reload();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set('Falha ao cadastrar cliente.');
-      }
-    });
+    if (this.clientForm.invalid) return;
+    const v = this.clientForm.getRawValue();
+    if (row) {
+      this.loading.set(true);
+      this.error.set(null);
+      this.api.update(row.id, v).subscribe({
+        next: () => {
+          this.clearSelection();
+          this.reload();
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set('Falha ao atualizar cliente.');
+        }
+      });
+    } else {
+      this.loading.set(true);
+      this.error.set(null);
+      this.api.create(v).subscribe({
+        next: () => {
+          this.clearSelection();
+          this.reload();
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error.set('Falha ao cadastrar cliente.');
+        }
+      });
+    }
   }
 
   remove(id: string) {
