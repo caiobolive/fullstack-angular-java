@@ -33,6 +33,10 @@
   flex-wrap: wrap;
 }
 
+.theme-trigger {
+  margin-inline-start: 4px;
+}
+
 .nav-active {
   background-color: color-mix(in srgb, var(--mat-sys-on-primary) 18%, transparent);
   border-radius: 999px;

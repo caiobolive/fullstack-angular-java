@@ -1,20 +1,36 @@
-// Angular Material — tema M3 (cores + tipografia Inter + densidade padrão)
+// Angular Material — tema M3 claro + escuro (classe em `html.app-dark-theme`, ver ThemeService)
 @use '@angular/material' as mat;
 
-$app-theme: mat.define-theme(
+$_typography: (
+  plain-family: Inter,
+  brand-family: Inter,
+);
+
+$_density: (
+  scale: 0,
+);
+
+$app-light-theme: mat.define-theme(
   (
     color: (
       theme-type: light,
       primary: mat.$azure-palette,
       tertiary: mat.$cyan-palette,
     ),
-    typography: (
-      plain-family: Inter,
-      brand-family: Inter,
+    typography: $_typography,
+    density: $_density,
+  )
+);
+
+$app-dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$azure-palette,
+      tertiary: mat.$cyan-palette,
     ),
-    density: (
-      scale: 0,
-    ),
+    typography: $_typography,
+    density: $_density,
   )
 );
 
@@ -24,7 +40,12 @@ $app-theme: mat.define-theme(
   --app-motion-duration-short: 180ms;
   --app-motion-duration-medium: 260ms;
   --app-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
-  @include mat.all-component-themes($app-theme);
+  @include mat.all-component-themes($app-light-theme);
+}
+
+:root.app-dark-theme {
+  color-scheme: dark;
+  @include mat.all-component-themes($app-dark-theme);
 }
 
 @include mat.system-classes();
