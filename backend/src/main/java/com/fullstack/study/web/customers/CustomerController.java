@@ -1,7 +1,7 @@
-package com.fullstack.study.web.clients;
+package com.fullstack.study.web.customers;
 
-import com.fullstack.study.application.ClientService;
-import com.fullstack.study.domain.Client;
+import com.fullstack.study.application.CustomerService;
+import com.fullstack.study.domain.Customer;
 import com.fullstack.study.web.ApiPaths;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -21,44 +21,44 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(ApiPaths.API_V1 + "/clients")
-public class ClientController {
+@RequestMapping(ApiPaths.API_V1 + "/customers")
+public class CustomerController {
 
-	private final ClientService clientService;
+	private final CustomerService customerService;
 
-	public ClientController(ClientService clientService) {
-		this.clientService = clientService;
+	public CustomerController(CustomerService customerService) {
+		this.customerService = customerService;
 	}
 
 	@GetMapping
-	public List<ClientResponse> list() {
-		return clientService.list().stream().map(ClientController::toResponse).toList();
+	public List<CustomerResponse> list() {
+		return customerService.list().stream().map(CustomerController::toResponse).toList();
 	}
 
 	@GetMapping("/{id}")
-	public ClientResponse get(@PathVariable UUID id) {
-		return toResponse(clientService.get(id));
+	public CustomerResponse get(@PathVariable UUID id) {
+		return toResponse(customerService.get(id));
 	}
 
 	@PostMapping
-	public ResponseEntity<ClientResponse> create(@Valid @RequestBody ClientUpsertRequest request) {
-		var client = clientService.create(request.name(), request.email(), request.phone(), request.document());
-		return ResponseEntity.ok(toResponse(client));
+	public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerUpsertRequest request) {
+		var customer = customerService.create(request.name(), request.email(), request.phone(), request.document());
+		return ResponseEntity.ok(toResponse(customer));
 	}
 
 	@PutMapping("/{id}")
-	public ClientResponse update(@PathVariable UUID id, @Valid @RequestBody ClientUpsertRequest request) {
-		return toResponse(clientService.update(id, request.name(), request.email(), request.phone(), request.document()));
+	public CustomerResponse update(@PathVariable UUID id, @Valid @RequestBody CustomerUpsertRequest request) {
+		return toResponse(customerService.update(id, request.name(), request.email(), request.phone(), request.document()));
 	}
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> delete(@PathVariable UUID id) {
-		clientService.delete(id);
+		customerService.delete(id);
 		return ResponseEntity.noContent().build();
 	}
 
-	private static ClientResponse toResponse(Client c) {
-		return new ClientResponse(
+	private static CustomerResponse toResponse(Customer c) {
+		return new CustomerResponse(
 				c.getId(),
 				c.getName(),
 				c.getEmail(),
@@ -70,14 +70,14 @@ public class ClientController {
 		);
 	}
 
-	public record ClientUpsertRequest(
+	public record CustomerUpsertRequest(
 			@NotBlank @Size(max = 200) String name,
 			@NotBlank @Email @Size(max = 320) String email,
 			@NotBlank @Size(max = 30) String phone,
 			@NotBlank @Size(max = 18) String document
 	) {}
 
-	public record ClientResponse(
+	public record CustomerResponse(
 			UUID id,
 			String name,
 			String email,

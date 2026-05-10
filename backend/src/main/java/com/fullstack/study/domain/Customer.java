@@ -11,8 +11,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "clients")
-public class Client {
+@Table(name = "customers")
+public class Customer {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -39,9 +39,9 @@ public class Client {
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt = Instant.now();
 
-	protected Client() {}
+	protected Customer() {}
 
-	public Client(String name, String email, String phone, String document, UUID ownerId) {
+	public Customer(String name, String email, String phone, String document, UUID ownerId) {
 		this.name = name;
 		this.email = email;
 		this.phone = phone;
