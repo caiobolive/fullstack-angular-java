@@ -1,4 +1,4 @@
-import { fakeAsync, tick, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
@@ -6,6 +6,11 @@ import { CustomersPage } from './customers.page';
 
 function isCustomersListRequest(url: string): boolean {
   return url.split('?')[0].endsWith('/api/v1/customers');
+}
+
+function searchParamFromRequestUrl(url: string, key: string): string | null {
+  const query = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+  return new URLSearchParams(query).get(key);
 }
 
 const sampleRow = {
@@ -56,9 +61,11 @@ describe('CustomersPage', () => {
     httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush([]);
     fixture.componentInstance.searchControl.setValue('acme');
     tick(350);
-    const req = httpMock.expectOne(
-      (r) => isCustomersListRequest(r.url) && r.params.get('q') === 'acme'
-    );
+    const req = httpMock.expectOne((r) => {
+      if (!isCustomersListRequest(r.url)) return false;
+      const q = r.params.get('q') ?? searchParamFromRequestUrl(r.url, 'q');
+      return q === 'acme';
+    });
     req.flush([]);
   }));
 

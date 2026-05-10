@@ -317,7 +317,7 @@ export class CustomersPage {
 
   constructor() {
     this.searchControl.valueChanges
-      .pipe(debounceTime(1000), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.reload());
     this.reload();
   }

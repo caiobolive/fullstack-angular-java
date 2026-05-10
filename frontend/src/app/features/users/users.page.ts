@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { UsersApi, type UserResponse } from '../../api/users.api';
 import { AuthService } from '../../core/auth/auth.service';
@@ -8,202 +15,192 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
 
 @Component({
   selector: 'app-users-page',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
+    MatDividerModule,
+    MatProgressSpinnerModule
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
       <header class="header">
-        <h1>Usuários</h1>
-        <p class="muted">Apenas administradores podem gerenciar usuários.</p>
+        <h1 class="mat-font-headline-md">Usuários</h1>
+        <p class="muted mat-font-body-md">Apenas administradores podem gerenciar usuários.</p>
       </header>
 
-      <section class="card">
-        <h2>Novo usuário</h2>
-        <form [formGroup]="createForm" (ngSubmit)="create()">
-          <label>
-            <span>Email</span>
-            <input type="email" formControlName="email" autocomplete="off" />
-          </label>
-          <label>
-            <span>Senha (mín. 8)</span>
-            <input type="password" formControlName="password" autocomplete="new-password" />
-          </label>
-          <fieldset>
-            <legend>Papéis</legend>
-            <label class="inline">
-              <input type="checkbox" formControlName="roleUser" />
-              ROLE_USER
-            </label>
-            <label class="inline">
-              <input type="checkbox" formControlName="roleAdmin" />
-              ROLE_ADMIN
-            </label>
-          </fieldset>
-          <button type="submit" [disabled]="createForm.invalid || loading()">Criar</button>
-        </form>
-      </section>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Novo usuário</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="createForm" (ngSubmit)="create()" class="stack">
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="off" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Senha (mín. 8)</mat-label>
+              <input matInput type="password" formControlName="password" autocomplete="new-password" />
+            </mat-form-field>
+            <div class="roles">
+              <mat-checkbox formControlName="roleUser">ROLE_USER</mat-checkbox>
+              <mat-checkbox formControlName="roleAdmin">ROLE_ADMIN</mat-checkbox>
+            </div>
+            <button mat-flat-button color="primary" type="submit" [disabled]="createForm.invalid || loading()">
+              Criar
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
 
-      <section class="card">
-        <div class="row">
-          <h2>Lista</h2>
-          <button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
-        </div>
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
-        }
-        <ul class="list">
-          @for (u of users(); track u.id) {
-            <li class="item">
-              <div class="meta">
-                <strong>{{ u.email }}</strong>
-                @if (drafts().get(u.id); as d) {
-                  <div class="row-controls">
-                    <label class="inline">
-                      <input
-                        type="checkbox"
+      <mat-card appearance="outlined">
+        <mat-card-header class="list-head">
+          <mat-card-title>Lista</mat-card-title>
+          <span class="toolbar-actions">
+            @if (loading()) {
+              <mat-spinner diameter="26" />
+            }
+            <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">
+              Recarregar
+            </button>
+          </span>
+        </mat-card-header>
+        <mat-divider />
+        <mat-card-content>
+          @if (error()) {
+            <p class="banner-error" role="alert">{{ error() }}</p>
+          }
+
+          <div class="user-list">
+            @for (u of users(); track u.id) {
+              <mat-card class="user-row" appearance="outlined">
+                <mat-card-content>
+                  <div class="email-line mat-font-title-md">{{ u.email }}</div>
+                  @if (drafts().get(u.id); as d) {
+                    <div class="row-controls">
+                      <mat-checkbox
                         [checked]="d.enabled"
                         [disabled]="isSelf(u)"
-                        (change)="toggleEnabled(u.id, $any($event.target).checked)"
-                      />
-                      Ativo
-                    </label>
-                    <label class="inline">
-                      <input type="checkbox" [checked]="d.roleUser" (change)="toggleRoleUser(u.id, $any($event.target).checked)" />
-                      ROLE_USER
-                    </label>
-                    <label class="inline">
-                      <input
-                        type="checkbox"
+                        (change)="toggleEnabled(u.id, $event.checked)"
+                      >
+                        Ativo
+                      </mat-checkbox>
+                      <mat-checkbox [checked]="d.roleUser" (change)="toggleRoleUser(u.id, $event.checked)">
+                        ROLE_USER
+                      </mat-checkbox>
+                      <mat-checkbox
                         [checked]="d.roleAdmin"
                         [disabled]="isSelf(u)"
-                        (change)="toggleRoleAdmin(u.id, $any($event.target).checked)"
-                      />
-                      ROLE_ADMIN
-                    </label>
-                    <button type="button" class="secondary" (click)="saveRow(u)" [disabled]="loading()">Salvar</button>
-                  </div>
-                  @if (isSelf(u)) {
-                    <small class="hint">Sua conta: não é possível desativar ou remover ROLE_ADMIN aqui.</small>
+                        (change)="toggleRoleAdmin(u.id, $event.checked)"
+                      >
+                        ROLE_ADMIN
+                      </mat-checkbox>
+                      <button mat-flat-button color="primary" type="button" (click)="saveRow(u)" [disabled]="loading()">
+                        Salvar
+                      </button>
+                    </div>
+                    @if (isSelf(u)) {
+                      <small class="hint mat-font-body-sm">Sua conta: não é possível desativar ou remover ROLE_ADMIN aqui.</small>
+                    }
                   }
-                }
-              </div>
-            </li>
-          }
-        </ul>
-      </section>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
   `,
-  styles: [
-    `
-      .page {
-        max-width: 720px;
-        margin: 24px auto;
-        padding: 0 16px;
-        display: grid;
-        gap: 16px;
-      }
-      .header .muted {
-        margin: 4px 0 0;
-        color: #6b7280;
-        font-size: 0.9rem;
-      }
-      .card {
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 16px;
-        background: #fff;
-      }
-      form {
-        display: grid;
-        gap: 12px;
-      }
-      label span {
-        display: block;
-        font-size: 0.85rem;
-        margin-bottom: 4px;
-      }
-      input[type='email'],
-      input[type='password'] {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        box-sizing: border-box;
-      }
-      fieldset {
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        margin: 0;
-        padding: 10px 12px;
-      }
-      .inline {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 6px 0;
-      }
-      button {
-        padding: 10px 12px;
-        border: 0;
-        border-radius: 10px;
-        background: #111827;
-        color: #fff;
-        cursor: pointer;
-      }
-      button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .error {
-        color: #b91c1c;
-      }
-      .list {
-        list-style: none;
-        padding: 0;
-        margin: 12px 0 0;
-        display: grid;
-        gap: 8px;
-      }
-      .item {
-        border: 1px solid #f3f4f6;
-        border-radius: 10px;
-        padding: 12px;
-      }
-      .meta {
-        display: grid;
-        gap: 4px;
-      }
-      .meta small {
-        color: #6b7280;
-      }
-      .row-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        margin-top: 8px;
-      }
-      button.secondary {
-        background: #374151;
-      }
-      .hint {
-        display: block;
-        margin-top: 6px;
-        color: #92400e;
-      }
-    `
-  ]
+  styles: `
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .header .muted {
+      margin: 4px 0 0;
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .roles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      align-items: center;
+      padding: 4px 0 8px;
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .banner-error {
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background-color: var(--mat-sys-error-container);
+      color: var(--mat-sys-on-error-container);
+    }
+
+    .user-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .user-row {
+      transition: box-shadow 200ms cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .email-line {
+      margin-bottom: 4px;
+    }
+
+    .row-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .hint {
+      display: block;
+      margin-top: 8px;
+      color: var(--mat-sys-tertiary);
+    }
+  `
 })
 export class UsersPage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly users = signal<UserResponse[]>([]);
-  /** Edits keyed by user id; reset when lista recarrega. */
+  /** Edits keyed by user id; reset quando lista recarrega. */
   readonly drafts = signal(new Map<string, UserRowDraft>());
 
   private readonly api = inject(UsersApi);
