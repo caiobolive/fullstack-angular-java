@@ -1,5 +1,6 @@
 // Angular Material — tema M3 claro + escuro (classe em `html.app-dark-theme`, ver ThemeService)
 @use '@angular/material' as mat;
+@use './feature-pages.scss' as *;
 
 $_typography: (
   plain-family: Inter,

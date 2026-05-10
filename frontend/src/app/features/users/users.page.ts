@@ -27,18 +27,18 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="page">
-      <header class="page-header">
+    <div class="app-feature-page">
+      <header>
         <h1 class="mat-headline-medium page-title">Usuários</h1>
-        <p class="mat-body-medium muted">Apenas administradores podem gerenciar usuários.</p>
+        <p class="mat-body-medium app-feature-page__subtitle">Apenas administradores podem gerenciar usuários.</p>
       </header>
 
-      <mat-card appearance="outlined" class="panel">
+      <mat-card appearance="outlined" class="app-feature-panel">
         <mat-card-header>
           <mat-card-title>Novo usuário</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <form [formGroup]="createForm" (ngSubmit)="create()" class="stack">
+          <form [formGroup]="createForm" (ngSubmit)="create()" class="users-create-form app-feature-form-stack">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>E-mail</mat-label>
               <input matInput type="email" formControlName="email" autocomplete="off" />
@@ -75,12 +75,12 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="panel">
+      <mat-card appearance="outlined" class="app-feature-panel">
         @if (loading()) {
           <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
         }
 
-        <mat-card-header class="list-head">
+        <mat-card-header class="app-feature-panel-head">
           <mat-card-title>Lista</mat-card-title>
           <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
         </mat-card-header>
@@ -89,7 +89,7 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
 
         <mat-card-content>
           @if (error()) {
-            <p class="banner-error mat-body-medium" role="alert">{{ error() }}</p>
+            <p class="app-contained-alert-error mat-body-medium" role="alert">{{ error() }}</p>
           }
 
           <div class="user-list">
@@ -121,7 +121,9 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
                       </button>
                     </div>
                     @if (isSelf(u)) {
-                      <small class="hint mat-body-small">Sua conta: não é possível desativar ou remover ROLE_ADMIN aqui.</small>
+                      <small class="users-row-hint mat-body-small app-text-muted">
+                        Sua conta: não é possível desativar ou remover ROLE_ADMIN aqui.
+                      </small>
                     }
                   }
                 </mat-card-content>
@@ -133,38 +135,8 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
     </div>
   `,
   styles: `
-    .page {
-      width: 100%;
-      max-width: 960px;
-      margin-inline: auto;
-      padding-inline: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .page-header .muted {
-      margin: 4px 0 0;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .panel {
-      overflow: hidden;
-    }
-
-    .panel mat-progress-bar {
-      border-radius: 12px 12px 0 0;
-    }
-
-    .stack {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .users-create-form {
       margin-top: 8px;
-    }
-
-    .stack mat-form-field {
-      width: 100%;
     }
 
     .roles {
@@ -175,31 +147,10 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
       padding: 4px 0 8px;
     }
 
-    .list-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding-top: 8px;
-    }
-
-    .banner-error {
-      margin: 12px 0;
-      padding: 10px 12px;
-      border-radius: 8px;
-      background-color: var(--mat-sys-error-container);
-      color: var(--mat-sys-on-error-container);
-    }
-
     .user-list {
       display: grid;
       gap: 12px;
       margin-top: 16px;
-    }
-
-    .user-row {
-      transition: box-shadow calc(var(--app-motion-duration-medium) + 20ms) var(--app-motion-easing-standard);
     }
 
     .email-line {
@@ -214,10 +165,9 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
       margin-top: 8px;
     }
 
-    .hint {
+    .users-row-hint {
       display: block;
       margin-top: 8px;
-      color: var(--mat-sys-on-surface-variant);
     }
   `
 })

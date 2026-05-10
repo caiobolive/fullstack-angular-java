@@ -32,18 +32,18 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="page">
-      <header class="page-header">
+    <div class="app-feature-page">
+      <header>
         <h1 class="mat-headline-medium page-title">Clientes</h1>
-        <p class="mat-body-medium muted">Cadastro com formulários reativos e validações.</p>
+        <p class="mat-body-medium app-feature-page__subtitle">Cadastro com formulários reativos e validações.</p>
       </header>
 
-      <mat-card appearance="outlined" class="panel">
+      <mat-card appearance="outlined" class="app-feature-panel">
         @if (loading()) {
           <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
         }
 
-        <mat-card-header class="panel-head">
+        <mat-card-header class="app-feature-panel-head">
           <mat-card-title>Lista</mat-card-title>
           <div class="toolbar">
             <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
@@ -53,7 +53,7 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
           </div>
         </mat-card-header>
 
-        <mat-card-content class="panel-body">
+        <mat-card-content class="customers-panel-body">
           <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
             <mat-label>Buscar</mat-label>
             <mat-icon matPrefix>search</mat-icon>
@@ -67,13 +67,13 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
           </mat-form-field>
 
           @if (error()) {
-            <p class="banner-error mat-body-medium" role="alert">{{ error() }}</p>
+            <p class="app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
           }
 
           @if (!loading() && customers().length === 0 && !activeSearch()) {
             <div class="empty-state" role="status">
               <p class="empty-title mat-body-large">Nenhum cliente cadastrado</p>
-              <p class="empty-hint mat-body-medium">
+              <p class="empty-hint mat-body-medium app-text-muted">
                 Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
               </p>
               <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
@@ -83,7 +83,7 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
           } @else if (!loading() && customers().length === 0 && activeSearch()) {
             <div class="empty-state" role="status">
               <p class="empty-title mat-body-large">Nenhum resultado encontrado</p>
-              <p class="empty-hint mat-body-medium">
+              <p class="empty-hint mat-body-medium app-text-muted">
                 Ajuste o termo de busca ou limpe o campo para ver todos os clientes.
               </p>
             </div>
@@ -97,7 +97,7 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
                 >
                   <div matListItemTitle>{{ c.name }}</div>
                   <div matListItemLine>{{ c.email }} · {{ c.phone }}</div>
-                  <div matListItemLine class="dim-line">
+                  <div matListItemLine class="dim-line app-text-muted">
                     Doc: {{ c.document }} · Criado {{ c.createdAt | date: 'short' }} · Atualizado
                     {{ c.updatedAt | date: 'short' }} · Owner: {{ c.ownerId }}
                   </div>
@@ -121,7 +121,7 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
 
       @if (editorOpen()) {
         <div class="editor-host" [@editorPanel]>
-          <mat-card appearance="outlined" class="panel editor">
+          <mat-card appearance="outlined" class="app-feature-panel editor">
             <mat-card-content>
               <div class="editor-toolbar">
                 <h2 class="mat-headline-small editor-title">{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
@@ -131,12 +131,12 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
               </div>
 
               @if (selected(); as sel) {
-                <p class="meta-sub mat-body-small">
+                <p class="meta-sub mat-body-small app-text-muted">
                   ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
                 </p>
               }
 
-              <form class="form-grid" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
+              <form class="app-feature-form-stack" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
                 <mat-form-field appearance="outline">
                   <mat-label>Nome</mat-label>
                   <input matInput type="text" formControlName="name" autocomplete="name" />
@@ -183,37 +183,6 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
   `,
   styles: [
     `
-      .page {
-        width: 100%;
-        max-width: 960px;
-        margin-inline: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .page-header .muted {
-        margin: 4px 0 0;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .panel {
-        overflow: hidden;
-      }
-
-      .panel mat-progress-bar {
-        border-radius: 12px 12px 0 0;
-      }
-
-      .panel-head {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding-top: 8px;
-      }
-
       .toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -221,7 +190,7 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
         align-items: center;
       }
 
-      .panel-body {
+      .customers-panel-body {
         padding-top: 8px !important;
       }
 
@@ -229,11 +198,6 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
         width: 100%;
         max-width: 440px;
         margin-bottom: 8px;
-      }
-
-      .banner-error {
-        margin: 8px 0;
-        color: var(--mat-sys-error);
       }
 
       .empty-state {
@@ -253,7 +217,6 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
       .empty-hint {
         margin: 8px auto 16px;
         max-width: 360px;
-        color: var(--mat-sys-on-surface-variant);
         line-height: 1.45;
       }
 
@@ -273,7 +236,6 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
       }
 
       .dim-line {
-        color: var(--mat-sys-on-surface-variant);
         font-size: 0.8rem;
       }
 
@@ -303,17 +265,6 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
 
       .meta-sub {
         margin: 0 0 12px;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .form-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .form-grid mat-form-field {
-        width: 100%;
       }
 
       .actions-row {

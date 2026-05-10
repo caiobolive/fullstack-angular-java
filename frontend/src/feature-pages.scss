@@ -1,0 +1,62 @@
+// Etapa 7 — layout e alertas partilhados pelas páginas Material (clientes, usuários, login).
+
+.app-feature-page {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app-feature-page__subtitle {
+  margin: 4px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.app-feature-panel {
+  overflow: hidden;
+}
+
+.app-feature-panel mat-progress-bar {
+  border-radius: 12px 12px 0 0;
+}
+
+.app-feature-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.app-feature-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-feature-form-stack mat-form-field {
+  width: 100%;
+}
+
+/** Erro em linha (texto). Transição de cores via tokens M3 em `styles.scss`. */
+.app-inline-alert-error {
+  margin: 8px 0;
+  color: var(--mat-sys-error);
+}
+
+/** Erro em faixa (error container). */
+.app-contained-alert-error {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+/** Texto secundário (superfície variante). */
+.app-text-muted {
+  color: var(--mat-sys-on-surface-variant);
+}

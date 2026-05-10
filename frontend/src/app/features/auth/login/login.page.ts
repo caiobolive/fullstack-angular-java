@@ -29,7 +29,7 @@ import { AuthService } from '../../../core/auth/auth.service';
         </mat-card-header>
 
         <mat-card-content>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form">
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form app-feature-form-stack">
             <mat-form-field appearance="outline">
               <mat-label>E-mail</mat-label>
               <input matInput type="email" formControlName="email" autocomplete="email" />
@@ -55,7 +55,7 @@ import { AuthService } from '../../../core/auth/auth.service';
             </mat-form-field>
 
             @if (error()) {
-              <p class="server-error mat-body-medium" role="alert">{{ error() }}</p>
+              <p class="app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
             }
 
             <div class="submit-row">
@@ -68,7 +68,7 @@ import { AuthService } from '../../../core/auth/auth.service';
             </div>
           </form>
 
-          <p class="hint mat-body-small">
+          <p class="login-dev-hint mat-body-small app-text-muted">
             Em dev, existe um seed default:
             <code>admin&#64;example.com</code> / <code>admin123</code>
           </p>
@@ -95,13 +95,7 @@ import { AuthService } from '../../../core/auth/auth.service';
       }
 
       .login-form {
-        display: flex;
-        flex-direction: column;
         gap: 4px;
-      }
-
-      .login-form mat-form-field {
-        width: 100%;
       }
 
       .submit-row {
@@ -111,18 +105,12 @@ import { AuthService } from '../../../core/auth/auth.service';
         margin-top: 12px;
       }
 
-      .server-error {
-        margin: 4px 0 0;
-        color: var(--mat-sys-error);
-      }
-
-      .hint {
+      .login-dev-hint {
         margin-top: 20px;
         margin-bottom: 0;
-        color: var(--mat-sys-on-surface-variant);
       }
 
-      .hint code {
+      .login-dev-hint code {
         padding: 2px 6px;
         border-radius: 6px;
         background-color: var(--mat-sys-surface-container-highest);
