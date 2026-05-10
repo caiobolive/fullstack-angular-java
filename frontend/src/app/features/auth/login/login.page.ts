@@ -1,90 +1,132 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule
+  ],
   template: `
-    <div class="auth-shell">
-      <h1>Login</h1>
+    <div class="login-page">
+      <mat-card appearance="outlined" class="login-card">
+        <mat-card-header>
+          <mat-card-title>Login</mat-card-title>
+          <mat-card-subtitle>Acesse com sua conta</mat-card-subtitle>
+        </mat-card-header>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <label>
-          <span>Email</span>
-          <input type="email" formControlName="email" autocomplete="email" />
-        </label>
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form">
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail</mat-label>
+              <input matInput type="email" formControlName="email" autocomplete="email" />
+              @if (showEmailErrors()) {
+                @if (form.controls.email.hasError('required')) {
+                  <mat-error>E-mail é obrigatório.</mat-error>
+                } @else if (form.controls.email.hasError('email')) {
+                  <mat-error>Informe um e-mail válido.</mat-error>
+                }
+              }
+            </mat-form-field>
 
-        <label>
-          <span>Senha</span>
-          <input type="password" formControlName="password" autocomplete="current-password" />
-        </label>
+            <mat-form-field appearance="outline">
+              <mat-label>Senha</mat-label>
+              <input matInput type="password" formControlName="password" autocomplete="current-password" />
+              @if (showPasswordErrors()) {
+                @if (form.controls.password.hasError('required')) {
+                  <mat-error>Senha é obrigatória.</mat-error>
+                } @else if (form.controls.password.hasError('minlength')) {
+                  <mat-error>Mínimo de 3 caracteres.</mat-error>
+                }
+              }
+            </mat-form-field>
 
-        @if (error()) {
-          <p class="error">{{ error() }}</p>
-        }
+            @if (error()) {
+              <p class="server-error mat-body-medium" role="alert">{{ error() }}</p>
+            }
 
-        <button type="submit" [disabled]="form.invalid || loading()">Entrar</button>
-      </form>
+            <div class="submit-row">
+              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading()">
+                Entrar
+              </button>
+              @if (loading()) {
+                <mat-spinner diameter="28" aria-label="Carregando" />
+              }
+            </div>
+          </form>
 
-      <p class="hint">
-        Em dev, existe um seed default:
-        <code>admin@example.com</code> / <code>admin123</code>
-      </p>
+          <p class="hint mat-body-small">
+            Em dev, existe um seed default:
+            <code>admin&#64;example.com</code> / <code>admin123</code>
+          </p>
+        </mat-card-content>
 
-      <a routerLink="/customers">Ir para Clientes</a>
+        <mat-card-actions align="end">
+          <a mat-button routerLink="/customers">Ir para Clientes</a>
+        </mat-card-actions>
+      </mat-card>
     </div>
   `,
   styles: [
     `
-      .auth-shell {
+      .login-page {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 32px 16px 48px;
+      }
+
+      .login-card {
+        width: 100%;
         max-width: 420px;
-        margin: 48px auto;
-        padding: 24px;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        background: #fff;
       }
-      form {
-        display: grid;
-        gap: 12px;
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
-      label {
-        display: grid;
-        gap: 6px;
+
+      .login-form mat-form-field {
+        width: 100%;
       }
-      input {
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        outline: none;
+
+      .submit-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 12px;
       }
-      button {
-        padding: 10px 12px;
-        border: 0;
-        border-radius: 10px;
-        background: #111827;
-        color: #fff;
-        cursor: pointer;
+
+      .server-error {
+        margin: 4px 0 0;
+        color: var(--mat-sys-error);
       }
-      button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .error {
-        color: #b91c1c;
-        margin: 0;
-      }
+
       .hint {
-        margin-top: 16px;
-        color: #374151;
+        margin-top: 20px;
+        margin-bottom: 0;
+        color: var(--mat-sys-on-surface-variant);
       }
-      code {
-        background: #f3f4f6;
+
+      .hint code {
         padding: 2px 6px;
         border-radius: 6px;
+        background-color: var(--mat-sys-surface-container-highest);
+        font-size: 0.85em;
       }
     `
   ]
@@ -101,6 +143,16 @@ export class LoginPage {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(3)]]
   });
+
+  showEmailErrors(): boolean {
+    const c = this.form.controls.email;
+    return c.invalid && (c.touched || c.dirty);
+  }
+
+  showPasswordErrors(): boolean {
+    const c = this.form.controls.password;
+    return c.invalid && (c.touched || c.dirty);
+  }
 
   onSubmit() {
     if (this.form.invalid) return;
@@ -119,4 +171,3 @@ export class LoginPage {
     });
   }
 }
-
