@@ -8,10 +8,10 @@ import { AuthService } from './core/auth/auth.service';
     template: `
       <div class="app-shell">
         <header class="topbar">
-          <a class="brand" routerLink="/clients">Fullstack Study</a>
+          <a class="brand" routerLink="/customers">Fullstack Study</a>
 
           <nav class="nav">
-            <a routerLink="/clients">Clientes</a>
+            <a routerLink="/customers">Clientes</a>
             @if (auth.isAuthenticated() && auth.getRoles().includes('ROLE_ADMIN')) {
               <a routerLink="/users">Usuários</a>
             }

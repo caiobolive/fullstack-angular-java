@@ -2,10 +2,10 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 
-import { ClientsApi, type ClientResponse } from '../../api/clients.api';
+import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
 
 @Component({
-  selector: 'app-clients-page',
+  selector: 'app-customers-page',
   imports: [ReactiveFormsModule, DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -28,7 +28,7 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
           <p class="error">{{ error() }}</p>
         }
 
-        @if (!loading() && clients().length === 0) {
+        @if (!loading() && customers().length === 0) {
           <div class="empty-state" role="status">
             <p class="empty-title">Nenhum cliente cadastrado</p>
             <p class="empty-hint">
@@ -40,7 +40,7 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
           </div>
         } @else {
           <ul class="list">
-            @for (c of clients(); track c.id) {
+            @for (c of customers(); track c.id) {
               <li class="item" [class.selected]="editorOpen() && selected()?.id === c.id">
                 <div class="meta">
                   <strong>{{ c.name }}</strong>
@@ -76,37 +76,37 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
               ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
             </p>
           }
-          <form class="form-grid" [formGroup]="clientForm" (ngSubmit)="submitClientForm()">
+          <form class="form-grid" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
             <label>
               <span>Nome *</span>
               <input type="text" formControlName="name" autocomplete="name" />
-              @if (showErr(clientForm.controls.name)) {
-                <small class="field-error">{{ errMsg(clientForm.controls.name, 'Nome') }}</small>
+              @if (showErr(customerForm.controls.name)) {
+                <small class="field-error">{{ errMsg(customerForm.controls.name, 'Nome') }}</small>
               }
             </label>
             <label>
               <span>E-mail *</span>
               <input type="email" formControlName="email" autocomplete="email" />
-              @if (showErr(clientForm.controls.email)) {
-                <small class="field-error">{{ errMsg(clientForm.controls.email, 'E-mail') }}</small>
+              @if (showErr(customerForm.controls.email)) {
+                <small class="field-error">{{ errMsg(customerForm.controls.email, 'E-mail') }}</small>
               }
             </label>
             <label>
               <span>Telefone *</span>
               <input type="text" formControlName="phone" autocomplete="tel" />
-              @if (showErr(clientForm.controls.phone)) {
-                <small class="field-error">{{ errMsg(clientForm.controls.phone, 'Telefone') }}</small>
+              @if (showErr(customerForm.controls.phone)) {
+                <small class="field-error">{{ errMsg(customerForm.controls.phone, 'Telefone') }}</small>
               }
             </label>
             <label>
               <span>CPF ou CNPJ *</span>
               <input type="text" formControlName="document" />
-              @if (showErr(clientForm.controls.document)) {
-                <small class="field-error">{{ errMsg(clientForm.controls.document, 'Documento') }}</small>
+              @if (showErr(customerForm.controls.document)) {
+                <small class="field-error">{{ errMsg(customerForm.controls.document, 'Documento') }}</small>
               }
             </label>
             <div class="actions-row">
-              <button type="submit" [disabled]="clientForm.invalid || loading()">
+              <button type="submit" [disabled]="customerForm.invalid || loading()">
                 {{ selected() ? 'Salvar' : 'Cadastrar' }}
               </button>
             </div>
@@ -264,18 +264,18 @@ import { ClientsApi, type ClientResponse } from '../../api/clients.api';
     `
   ]
 })
-export class ClientsPage {
+export class CustomersPage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly clients = signal<ClientResponse[]>([]);
-  readonly selected = signal<ClientResponse | null>(null);
+  readonly customers = signal<CustomerResponse[]>([]);
+  readonly selected = signal<CustomerResponse | null>(null);
   /** Formulário visível apenas após “Novo cliente” ou “Editar”. */
   readonly editorOpen = signal(false);
 
-  private readonly api = inject(ClientsApi);
+  private readonly api = inject(CustomersApi);
   private readonly fb = inject(FormBuilder);
 
-  readonly clientForm = this.fb.nonNullable.group({
+  readonly customerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
     phone: ['', [Validators.required, Validators.maxLength(30)]],
@@ -306,7 +306,7 @@ export class ClientsPage {
     this.error.set(null);
     this.api.list().subscribe({
       next: (list) => {
-        this.clients.set(list);
+        this.customers.set(list);
         this.loading.set(false);
         const sel = this.selected();
         if (sel && !list.some((c) => c.id === sel.id)) {
@@ -323,7 +323,7 @@ export class ClientsPage {
   openCreate(): void {
     this.editorOpen.set(true);
     this.selected.set(null);
-    this.clientForm.reset({ name: '', email: '', phone: '', document: '' });
+    this.customerForm.reset({ name: '', email: '', phone: '', document: '' });
   }
 
   openEdit(id: string) {
@@ -333,7 +333,7 @@ export class ClientsPage {
       next: (c) => {
         this.selected.set(c);
         this.editorOpen.set(true);
-        this.clientForm.reset({
+        this.customerForm.reset({
           name: c.name,
           email: c.email,
           phone: c.phone,
@@ -351,13 +351,13 @@ export class ClientsPage {
   clearSelection(): void {
     this.editorOpen.set(false);
     this.selected.set(null);
-    this.clientForm.reset({ name: '', email: '', phone: '', document: '' });
+    this.customerForm.reset({ name: '', email: '', phone: '', document: '' });
   }
 
-  submitClientForm() {
+  submitCustomerForm() {
     const row = this.selected();
-    if (this.clientForm.invalid) return;
-    const v = this.clientForm.getRawValue();
+    if (this.customerForm.invalid) return;
+    const v = this.customerForm.getRawValue();
     if (row) {
       this.loading.set(true);
       this.error.set(null);

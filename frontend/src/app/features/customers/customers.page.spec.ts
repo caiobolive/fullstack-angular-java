@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
-import { ClientsPage } from './clients.page';
+import { CustomersPage } from './customers.page';
 
 const sampleRow = {
   id: '1',
@@ -15,17 +15,17 @@ const sampleRow = {
   updatedAt: new Date().toISOString()
 };
 
-describe('ClientsPage', () => {
-  let fixture: ComponentFixture<ClientsPage>;
+describe('CustomersPage', () => {
+  let fixture: ComponentFixture<CustomersPage>;
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ClientsPage],
+      imports: [CustomersPage],
       providers: [provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ClientsPage);
+    fixture = TestBed.createComponent(CustomersPage);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -33,14 +33,14 @@ describe('ClientsPage', () => {
 
   it('loads list on init', () => {
     fixture.detectChanges();
-    const listReq = httpMock.expectOne((r) => r.url.endsWith('/api/v1/clients'));
+    const listReq = httpMock.expectOne((r) => r.url.endsWith('/api/v1/customers'));
     listReq.flush([]);
-    expect(fixture.componentInstance.clients().length).toBe(0);
+    expect(fixture.componentInstance.customers().length).toBe(0);
   });
 
   it('mostra aviso quando a lista está vazia após carregar', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => r.url.endsWith('/api/v1/clients')).flush([]);
+    httpMock.expectOne((r) => r.url.endsWith('/api/v1/customers')).flush([]);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Nenhum cliente cadastrado');
@@ -49,24 +49,24 @@ describe('ClientsPage', () => {
 
   it('openEdit carrega via GET, abre o editor e preenche o formulário', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => r.url.endsWith('/api/v1/clients')).flush([sampleRow]);
+    httpMock.expectOne((r) => r.url.endsWith('/api/v1/customers')).flush([sampleRow]);
 
     fixture.componentInstance.openEdit('1');
     expect(fixture.componentInstance.editorOpen()).toBe(false);
 
-    const getReq = httpMock.expectOne((r) => r.url.endsWith('/api/v1/clients/1'));
+    const getReq = httpMock.expectOne((r) => r.url.endsWith('/api/v1/customers/1'));
     getReq.flush(sampleRow);
 
     expect(fixture.componentInstance.editorOpen()).toBe(true);
     expect(fixture.componentInstance.selected()?.id).toBe('1');
-    const v = fixture.componentInstance.clientForm.getRawValue();
+    const v = fixture.componentInstance.customerForm.getRawValue();
     expect(v.name).toBe('A');
     expect(v.email).toBe('a@b.com');
   });
 
   it('clearSelection fecha o editor e limpa selected', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => r.url.endsWith('/api/v1/clients')).flush([]);
+    httpMock.expectOne((r) => r.url.endsWith('/api/v1/customers')).flush([]);
     fixture.componentInstance.editorOpen.set(true);
     fixture.componentInstance.selected.set(sampleRow);
     fixture.componentInstance.clearSelection();
@@ -76,10 +76,9 @@ describe('ClientsPage', () => {
 
   it('openCreate abre o editor sem cliente selecionado', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => r.url.endsWith('/api/v1/clients')).flush([]);
+    httpMock.expectOne((r) => r.url.endsWith('/api/v1/customers')).flush([]);
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.editorOpen()).toBe(true);
     expect(fixture.componentInstance.selected()).toBeNull();
   });
-
 });

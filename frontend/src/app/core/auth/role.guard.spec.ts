@@ -8,14 +8,14 @@ import { TokenStorageService } from './token-storage.service';
 describe('roleGuard', () => {
   afterEach(() => localStorage.clear());
 
-  it('redirects to /clients when authenticated but missing role', () => {
+  it('redirects to /customers when authenticated but missing role', () => {
     localStorage.setItem('access_token', makeJwtWithRoles(['ROLE_USER']));
     TestBed.configureTestingModule({
       providers: [AuthService, TokenStorageService, provideRouter([])]
     });
     const router = TestBed.inject(Router);
     const result = TestBed.runInInjectionContext(() => roleGuard(['ROLE_ADMIN'])({} as any, {} as any));
-    expect(result).toEqual(router.parseUrl('/clients'));
+    expect(result).toEqual(router.parseUrl('/customers'));
   });
 
   it('allows when role present', () => {
