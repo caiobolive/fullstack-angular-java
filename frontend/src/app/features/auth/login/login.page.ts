@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login-page',
@@ -29,6 +30,14 @@ import { AuthService } from '../../../core/auth/auth.service';
         </mat-card-header>
 
         <mat-card-content class="login-card-body">
+          @if (environment.production) {
+            <p class="login-render-warmup mat-body-small" role="status">
+              <strong>API no Render:</strong> após um período sem tráfego, a primeira requisição pode levar cerca de
+              <strong>1 a 2 minutos</strong> a responder (aquecimento do serviço). Se o login demorar, aguarde e tente de
+              novo; as chamadas seguintes costumam ser rápidas.
+            </p>
+          }
+
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form app-feature-form-stack">
             <mat-form-field appearance="outline">
               <mat-label>E-mail</mat-label>
@@ -104,6 +113,16 @@ import { AuthService } from '../../../core/auth/auth.service';
         padding-top: 0 !important;
       }
 
+      .login-render-warmup {
+        margin: 0 0 var(--app-space-3);
+        padding: var(--app-space-3);
+        border-radius: var(--app-radius-sm);
+        border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 28%, var(--mat-sys-outline-variant));
+        background-color: color-mix(in srgb, var(--mat-sys-primary) 8%, var(--mat-sys-surface-container-low));
+        color: var(--mat-sys-on-surface);
+        line-height: 1.5;
+      }
+
       .login-form {
         gap: var(--app-space-3);
       }
@@ -151,6 +170,9 @@ import { AuthService } from '../../../core/auth/auth.service';
   ]
 })
 export class LoginPage {
+  /** Usado no template para exibir aviso de cold start (Render) só em produção. */
+  protected readonly environment = environment;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
