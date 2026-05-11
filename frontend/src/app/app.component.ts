@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -18,6 +19,7 @@ import { routeAnimations } from './route-animations';
     RouterLinkActive,
     MatToolbarModule,
     MatButtonModule,
+    MatDividerModule,
     MatIconModule,
     MatMenuModule,
     MatTooltipModule
@@ -25,12 +27,23 @@ import { routeAnimations } from './route-animations';
   animations: [routeAnimations],
   template: `
     <div class="app-shell">
+      <div class="app-topbar-frame">
       <mat-toolbar color="primary" class="topbar">
+        <button
+          mat-icon-button
+          type="button"
+          class="mobile-nav-trigger"
+          [matMenuTriggerFor]="mobileNavMenu"
+          aria-haspopup="menu"
+          aria-label="Abrir menu de navegação"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
         <a mat-button routerLink="/customers" class="brand-link" aria-label="Início">
           <span class="brand brand-text">Fullstack Study</span>
         </a>
         <span class="toolbar-spacer"></span>
-        <nav class="nav" aria-label="Principal">
+        <nav class="nav nav-desktop" aria-label="Principal">
           <a
             mat-button
             routerLink="/customers"
@@ -49,30 +62,55 @@ import { routeAnimations } from './route-animations';
           } @else {
             <button mat-button type="button" (click)="logout()">Sair</button>
           }
-          <button
-            mat-icon-button
-            type="button"
-            class="theme-trigger"
-            [matMenuTriggerFor]="themeMenu"
-            [matTooltip]="themeTooltip()"
-            aria-haspopup="menu"
-            aria-label="Tema da interface"
-          >
-            <mat-icon>{{ theme.effectiveDark() ? 'dark_mode' : 'light_mode' }}</mat-icon>
-          </button>
-          <mat-menu #themeMenu="matMenu">
-            @for (opt of themeMenuOptions; track opt.value) {
-              <button mat-menu-item type="button" (click)="theme.setPreference(opt.value)">
-                <mat-icon>{{ opt.icon }}</mat-icon>
-                <span>{{ opt.label }}</span>
-                @if (theme.preference() === opt.value) {
-                  <mat-icon iconPositionEnd>check</mat-icon>
-                }
-              </button>
-            }
-          </mat-menu>
         </nav>
+        <button
+          mat-icon-button
+          type="button"
+          class="theme-trigger"
+          [matMenuTriggerFor]="themeMenu"
+          [matTooltip]="themeTooltip()"
+          aria-haspopup="menu"
+          aria-label="Tema da interface"
+        >
+          <mat-icon>{{ theme.effectiveDark() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+        </button>
+        <mat-menu #themeMenu="matMenu">
+          @for (opt of themeMenuOptions; track opt.value) {
+            <button mat-menu-item type="button" (click)="theme.setPreference(opt.value)">
+              <mat-icon>{{ opt.icon }}</mat-icon>
+              <span>{{ opt.label }}</span>
+              @if (theme.preference() === opt.value) {
+                <mat-icon iconPositionEnd>check</mat-icon>
+              }
+            </button>
+          }
+        </mat-menu>
+        <mat-menu #mobileNavMenu="matMenu">
+          <button mat-menu-item type="button" routerLink="/customers">
+            <mat-icon>people</mat-icon>
+            <span>Clientes</span>
+          </button>
+          @if (auth.isAuthenticated() && auth.getRoles().includes('ROLE_ADMIN')) {
+            <button mat-menu-item type="button" routerLink="/users">
+              <mat-icon>manage_accounts</mat-icon>
+              <span>Usuários</span>
+            </button>
+          }
+          <mat-divider />
+          @if (!auth.isAuthenticated()) {
+            <button mat-menu-item type="button" routerLink="/login">
+              <mat-icon>login</mat-icon>
+              <span>Login</span>
+            </button>
+          } @else {
+            <button mat-menu-item type="button" (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Sair</span>
+            </button>
+          }
+        </mat-menu>
       </mat-toolbar>
+      </div>
 
       <main class="content">
         <div class="content-inner">

@@ -23,12 +23,12 @@ import { AuthService } from '../../../core/auth/auth.service';
   template: `
     <div class="login-page">
       <mat-card appearance="outlined" class="login-card app-feature-panel">
-        <mat-card-header>
+        <mat-card-header class="login-card-head">
           <mat-card-title>Login</mat-card-title>
           <mat-card-subtitle>Acesse com sua conta</mat-card-subtitle>
         </mat-card-header>
 
-        <mat-card-content>
+        <mat-card-content class="login-card-body">
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form app-feature-form-stack">
             <mat-form-field appearance="outline">
               <mat-label>E-mail</mat-label>
@@ -55,16 +55,19 @@ import { AuthService } from '../../../core/auth/auth.service';
             </mat-form-field>
 
             @if (error()) {
-              <p class="app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
+              <p class="login-inline-error app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
             }
 
-            <div class="submit-row">
-              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading()">
-                Entrar
-              </button>
-              @if (loading()) {
-                <mat-spinner diameter="28" aria-label="Carregando" />
-              }
+            <div class="login-actions">
+              <div class="login-actions__primary">
+                <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || loading()">
+                  Entrar
+                </button>
+                @if (loading()) {
+                  <mat-spinner diameter="28" aria-label="Carregando" />
+                }
+              </div>
+              <a mat-stroked-button routerLink="/customers" type="button">Ir para Clientes</a>
             </div>
           </form>
 
@@ -73,10 +76,6 @@ import { AuthService } from '../../../core/auth/auth.service';
             <code>admin&#64;example.com</code> / <code>admin123</code>
           </p>
         </mat-card-content>
-
-        <mat-card-actions align="end">
-          <a mat-button routerLink="/customers">Ir para Clientes</a>
-        </mat-card-actions>
       </mat-card>
     </div>
   `,
@@ -95,21 +94,50 @@ import { AuthService } from '../../../core/auth/auth.service';
         max-width: 26.25rem;
       }
 
-      .login-form {
-        gap: var(--app-space-2);
+      .login-card-head {
+        display: block;
+        padding-bottom: 0;
+        margin-bottom: var(--app-space-3);
       }
 
-      .submit-row {
+      .login-card-body {
+        padding-top: 0 !important;
+      }
+
+      .login-form {
+        gap: var(--app-space-3);
+      }
+
+      .login-inline-error {
+        margin: 0;
+      }
+
+      .login-actions {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: var(--app-space-4);
-        margin-top: var(--app-space-4);
+        justify-content: space-between;
+        gap: var(--app-space-3);
+        margin-top: var(--app-space-2);
+      }
+
+      .login-actions__primary {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--app-space-3);
+        min-height: 40px;
+      }
+
+      .login-actions > .mat-mdc-outlined-button {
+        flex-shrink: 0;
       }
 
       .login-dev-hint {
-        margin-top: var(--app-space-5);
+        margin-top: var(--app-space-4);
         margin-bottom: 0;
-        line-height: 1.5;
+        padding-top: var(--app-space-3);
+        border-top: 1px solid var(--mat-sys-outline-variant);
+        line-height: 1.55;
       }
 
       .login-dev-hint code {

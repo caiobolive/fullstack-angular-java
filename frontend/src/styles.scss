@@ -100,11 +100,6 @@ body {
       color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
   }
 
-  mat-toolbar.topbar {
-    transition:
-      background-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
-      color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
-  }
 }
 
 /* Botões Material — cobre text / raised / stroked / flat / ícone (host comum `.mat-mdc-button-base`) */
@@ -202,4 +197,55 @@ a.mat-mdc-button-base.nav-active {
     background-color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
     color var(--app-motion-duration-medium) var(--app-motion-easing-standard),
     filter var(--app-motion-duration-short) var(--app-motion-easing-standard);
+}
+
+/*
+ * Topbar: fundo no wrapper em stylesheet global (fim do ficheiro), com background-color
+ * separado do gradiente — se o shorthand falhar, mantém-se o azul sólido. O MatToolbar
+ * continua a pintar o host tarde no bundle; transparent + !important abaixo.
+ * Tom mais suave: mistura primary com superfície e gradiente com menos tertiary.
+ */
+app-root .app-topbar-frame {
+  --app-topbar-fill-start: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #3864b8) 70%,
+    var(--mat-sys-surface-container-low, #eef2f8) 42%
+  );
+  --app-topbar-fill-end: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--mat-sys-tertiary, #739eaa) 12%, var(--mat-sys-primary, #3864b8)) 70%,
+    var(--mat-sys-surface-container-low, #eef2f8) 42%
+  );
+
+  position: sticky;
+  top: 0;
+  z-index: 16;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--app-topbar-fill-start);
+  background-image: linear-gradient(
+    105deg,
+    var(--app-topbar-fill-start),
+    var(--app-topbar-fill-end)
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--mat-sys-on-primary, #ffffff) 12%, transparent);
+  color: var(--mat-sys-on-primary, #ffffff);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  app-root .app-topbar-frame {
+    transition:
+      background-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      background-image var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      border-color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard),
+      color var(--app-theme-crossfade-duration) var(--app-motion-easing-standard);
+  }
+}
+
+app-root mat-toolbar.topbar.mat-toolbar {
+  background-color: transparent !important;
+  background-image: none !important;
+  --mat-toolbar-container-background-color: transparent !important;
+  color: inherit !important;
 }

@@ -132,6 +132,11 @@ import { NgxSkeletonLoaderComponent } from 'ngx-skeleton-loader';
                     <mat-list-item
                       class="customer-item"
                       [class.customer-item-selected]="editorOpen() && selected()?.id === c.id"
+                      tabindex="0"
+                      [attr.aria-label]="'Editar cliente ' + c.name"
+                      (click)="onCustomerRowActivate(c)"
+                      (keydown.enter)="onCustomerRowActivate(c)"
+                      (keydown.space)="$event.preventDefault(); onCustomerRowActivate(c)"
                     >
                       <div matListItemTitle class="customer-block">
                         <div class="customer-name">{{ c.name }}</div>
@@ -146,8 +151,8 @@ import { NgxSkeletonLoaderComponent } from 'ngx-skeleton-loader';
                           mat-mini-fab
                           type="button"
                           color="primary"
-                          class="item-action-fab item-action-fab--edit"
-                          (click)="openEdit(c.id)"
+                          class="item-action-fab item-action-fab--edit customer-item__fab-edit"
+                          (click)="openEdit(c.id); $event.stopPropagation()"
                           [disabled]="busy()"
                           matTooltip="Editar"
                           aria-label="Editar cliente"
@@ -159,7 +164,7 @@ import { NgxSkeletonLoaderComponent } from 'ngx-skeleton-loader';
                           type="button"
                           color="warn"
                           class="item-action-fab item-action-fab--delete"
-                          (click)="requestDelete(c)"
+                          (click)="requestDelete(c); $event.stopPropagation()"
                           [disabled]="busy()"
                           matTooltip="Excluir"
                           aria-label="Excluir cliente"
@@ -406,6 +411,18 @@ import { NgxSkeletonLoaderComponent } from 'ngx-skeleton-loader';
         background-color: var(--mat-sys-surface-container-low);
         box-shadow: 0 1px 3px color-mix(in srgb, var(--mat-sys-on-surface) 7%, transparent);
         overflow: hidden;
+        cursor: pointer;
+      }
+
+      .customer-item:focus-visible {
+        outline: 2px solid var(--mat-sys-primary);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 767px) {
+        .customer-item__fab-edit {
+          display: none !important;
+        }
       }
 
       .customer-item ::ng-deep .mat-mdc-list-item-meta {
@@ -647,6 +664,11 @@ export class CustomersPage {
     this.editorOpen.set(true);
     this.selected.set(null);
     this.customerForm.reset({ name: '', email: '', phone: '', document: '' });
+  }
+
+  onCustomerRowActivate(c: CustomerResponse): void {
+    if (this.busy()) return;
+    this.openEdit(c.id);
   }
 
   openEdit(id: string) {

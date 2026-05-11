@@ -5,11 +5,29 @@
 }
 
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 16;
   flex-wrap: wrap;
   row-gap: 8px;
+}
+
+.app-topbar-frame .brand-text {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-size: clamp(1.25rem, 2.8vw, 1.5rem);
+  line-height: 1.15;
+}
+
+.app-topbar-frame .brand-link.mat-mdc-button {
+  color: inherit;
+}
+
+.app-topbar-frame .mat-icon {
+  color: inherit;
+}
+
+.app-topbar-frame .mat-mdc-button-base.mat-unthemed,
+.app-topbar-frame .mat-mdc-icon-button {
+  --mat-button-text-label-text-color: currentColor;
+  --mat-button-outlined-label-text-color: currentColor;
 }
 
 .toolbar-spacer {
@@ -21,9 +39,15 @@
   text-decoration: none;
 }
 
-.brand-text {
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.mobile-nav-trigger {
+  margin-inline-start: -8px;
+  margin-inline-end: 2px;
+}
+
+@media (min-width: 768px) {
+  .mobile-nav-trigger {
+    display: none;
+  }
 }
 
 .nav {
@@ -31,6 +55,12 @@
   align-items: center;
   gap: var(--app-space-1);
   flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .nav-desktop {
+    display: none;
+  }
 }
 
 @media (min-width: 600px) {
