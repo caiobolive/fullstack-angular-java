@@ -2,10 +2,12 @@
 
 Monorepo de estudo com **frontend** (Angular) e **backend** (Spring Boot) desacoplados, com autenticação **JWT + refresh token**, CRUD de **clientes**, administração de **usuários** (RBAC) e permissões **`ROLE_ADMIN` / `ROLE_USER`**.
 
+![Visão geral — área de clientes, lista e painel de edição](./docs/readme/fullstack.gif)
+
 ## Acesso
 
-- **Interface (produção — GitHub Pages):** [https://caiobolive.github.io/fullstack-angular-java/](https://caiobolive.github.io/fullstack-angular-java/)
-  O build de produção usa roteamento com **hash** (`#/customers`, etc.) e a base da API vem de `environment.prod.ts`, substituída no CI pelo workflow em `.github/workflows/deploy-frontend.yml` (`__API_BASE_URL_PLACEHOLDER__`). Para o browser falar com a API, essa URL tem de apontar para um backend acessível publicamente (HTTPS) com CORS autorizado para o domínio do Pages.
+- **Frontend:** [GitHub Pages — Fullstack Study](https://caiobolive.github.io/fullstack-angular-java/)
+- **Backend em produção:** API no **Render**; base de dados PostgreSQL no **Neon**.
 
 ## Frontend (Angular)
 
@@ -44,6 +46,14 @@ O cliente usa **`HttpClient`** contra o backend REST (`CustomersApi`); não há 
 - **Transições entre rotas** (`route-animations`, `provideAnimations()`).
 - Aviso ao fechar o editor com alterações por gravar (`CustomersCloseUnsavedDialogComponent`).
 
+**Tema claro / escuro**
+
+![Alternância entre tema claro e escuro](./docs/readme/fullstacklightdarktheme.gif)
+
+**Vista em resolução mobile**
+
+![Layout responsivo — navegação e lista em ecrã estreito](./docs/readme/fullstackmobile.gif)
+
 ### Autenticação e autorização
 
 - **Login** em rota lazy (`features/auth/login`).
@@ -78,8 +88,7 @@ Na pasta `frontend`: `npm test` ou `npx ng test`.
 
 ### Deploy
 
-- **URL publicada:** [https://caiobolive.github.io/fullstack-angular-java/](https://caiobolive.github.io/fullstack-angular-java/)
-- Configuração do pipeline e detalhes adicionais: `frontend/README.md` e `.github/workflows/deploy-frontend.yml`.
+URL pública na secção **Acesso**. Pipeline: `frontend/README.md` e `.github/workflows/deploy-frontend.yml`.
 
 ---
 
