@@ -26,6 +26,12 @@ const sampleRow = {
   updatedAt: new Date().toISOString()
 };
 
+const emptyListPage = { content: [] as typeof sampleRow[], page: 0, size: 10, totalElements: 0, totalPages: 0 };
+
+function pageWithOneRow() {
+  return { content: [sampleRow], page: 0, size: 10, totalElements: 1, totalPages: 1 };
+}
+
 describe('CustomersPage', () => {
   let fixture: ComponentFixture<CustomersPage>;
   let httpMock: HttpTestingController;
@@ -45,13 +51,13 @@ describe('CustomersPage', () => {
   it('loads list on init', () => {
     fixture.detectChanges();
     const listReq = httpMock.expectOne((r) => isCustomersListRequest(r.url));
-    listReq.flush([]);
+    listReq.flush(emptyListPage);
     expect(fixture.componentInstance.customers().length).toBe(0);
   });
 
   it('mostra aviso quando a lista está vazia após carregar', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush([]);
+    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush(emptyListPage);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Nenhum cliente cadastrado');
@@ -60,20 +66,20 @@ describe('CustomersPage', () => {
 
   it('pesquisa envia parâmetro q após debounce', fakeAsync(() => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush([]);
+    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush(emptyListPage);
     fixture.componentInstance.searchControl.setValue('acme');
     tick(350);
     const req = httpMock.expectOne((r) => {
       if (!isCustomersListRequest(r.url)) return false;
       const q = r.params.get('q') ?? searchParamFromRequestUrl(r.url, 'q');
-      return q === 'acme';
+      return q === 'acme' && r.params.get('page') === '0' && r.params.get('size') === '10';
     });
-    req.flush([]);
+    req.flush(emptyListPage);
   }));
 
   it('openEdit carrega via GET, abre o editor e preenche o formulário', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush([sampleRow]);
+    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush(pageWithOneRow());
 
     fixture.componentInstance.openEdit('1');
     expect(fixture.componentInstance.editorOpen()).toBe(false);
@@ -90,7 +96,7 @@ describe('CustomersPage', () => {
 
   it('clearSelection fecha o editor e limpa selected', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush([]);
+    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush(emptyListPage);
     fixture.componentInstance.editorOpen.set(true);
     fixture.componentInstance.selected.set(sampleRow);
     fixture.componentInstance.clearSelection();
@@ -100,7 +106,7 @@ describe('CustomersPage', () => {
 
   it('openCreate abre o editor sem cliente selecionado', () => {
     fixture.detectChanges();
-    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush([]);
+    httpMock.expectOne((r) => isCustomersListRequest(r.url)).flush(emptyListPage);
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.editorOpen()).toBe(true);
     expect(fixture.componentInstance.selected()).toBeNull();

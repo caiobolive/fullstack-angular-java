@@ -87,3 +87,125 @@
 .app-text-muted {
   color: var(--mat-sys-on-surface-variant);
 }
+
+/* Skeleton Clientes: vars em `app-customers-page` (texto + ngx via skeletonThemeFab); grid minmax(0,1fr) evita coluna de texto com largura 0. */
+app-customers-page {
+  --customers-skeleton-fill: #eef1f6;
+  --customers-skeleton-shimmer-mid: rgba(255, 255, 255, 0.34);
+}
+
+html.app-dark-theme app-customers-page {
+  --customers-skeleton-fill: #556070;
+  --customers-skeleton-shimmer-mid: rgba(255, 255, 255, 0.12);
+}
+
+app-customers-page .customer-skeleton-list {
+  margin-top: var(--app-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-3);
+}
+
+app-customers-page .customer-skeleton-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--app-space-4);
+  padding: var(--app-space-3) var(--app-space-4);
+  min-height: 4.75rem;
+  box-sizing: border-box;
+  border-radius: var(--app-radius-md);
+  border: 1px solid var(--mat-sys-outline-variant);
+  background-color: var(--mat-sys-surface-container-low);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--mat-sys-on-surface) 7%, transparent);
+}
+
+app-customers-page .customer-skeleton-card__text {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--app-space-2);
+}
+
+app-customers-page .customer-skeleton-line {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 6px;
+  height: 0.875rem;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  transform: translateZ(0);
+  background-color: var(--customers-skeleton-fill);
+}
+
+app-customers-page .customer-skeleton-line::before {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: min(200px, 55%);
+  height: 100%;
+  animation: customers-skeleton-progress 2s ease-in-out infinite;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    var(--customers-skeleton-shimmer-mid),
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 200px 100%;
+}
+
+app-customers-page .customer-skeleton-line--title {
+  max-width: 42%;
+  height: 1rem;
+}
+
+app-customers-page .customer-skeleton-line--mid {
+  max-width: 72%;
+}
+
+app-customers-page .customer-skeleton-line--meta {
+  max-width: 92%;
+  height: 0.6875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  app-customers-page .customer-skeleton-line::before {
+    animation: none;
+    display: none;
+  }
+}
+
+@keyframes customers-skeleton-progress {
+  0% {
+    transform: translate3d(-200px, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(calc(200px + 100vw), 0, 0);
+  }
+}
+
+app-customers-page .customer-skeleton-card__actions {
+  display: flex;
+  gap: var(--app-space-3);
+  flex-shrink: 0;
+  align-items: center;
+}
+
+app-customers-page .customer-skeleton-card__actions ngx-skeleton-loader {
+  display: block;
+  flex-shrink: 0;
+}
+
+.customers-page .customers-paginator {
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  background-color: var(--mat-sys-surface);
+}

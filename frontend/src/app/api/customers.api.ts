@@ -21,17 +21,25 @@ export interface CustomerUpsertRequest {
   document: string;
 }
 
+export interface CustomerPageResponse {
+  content: CustomerResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CustomersApi {
   constructor(private readonly http: HttpClient) {}
 
-  list(search?: string) {
+  list(search?: string, page = 0, size = 10) {
     const trimmed = search?.trim() ?? '';
-    let params = new HttpParams();
+    let params = new HttpParams().set('page', String(page)).set('size', String(size));
     if (trimmed.length > 0) {
       params = params.set('q', trimmed);
     }
-    return this.http.get<CustomerResponse[]>(`${APP_CONFIG.apiBaseUrl}/api/v1/customers`, { params });
+    return this.http.get<CustomerPageResponse>(`${APP_CONFIG.apiBaseUrl}/api/v1/customers`, { params });
   }
 
   get(id: string) {

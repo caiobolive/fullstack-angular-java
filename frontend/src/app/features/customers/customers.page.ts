@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,7 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -17,6 +24,7 @@ import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
 import { CustomersCloseUnsavedDialogComponent } from './customers-close-unsaved-dialog.component';
 import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confirm-dialog.component';
+import { NgxSkeletonLoaderComponent } from 'ngx-skeleton-loader';
 
 @Component({
   selector: 'app-customers-page',
@@ -29,10 +37,11 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
     MatInputModule,
     MatIconModule,
     MatListModule,
-    MatProgressBarModule,
+    MatPaginatorModule,
     MatSidenavModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    NgxSkeletonLoaderComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -52,10 +61,10 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
             />
           </mat-form-field>
           <div class="toolbar">
-            <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
+            <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="busy()">
               Novo cliente
             </button>
-            <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
+            <button mat-stroked-button type="button" (click)="reload()" [disabled]="busy()">Recarregar</button>
           </div>
         </div>
       </header>
@@ -63,26 +72,54 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
       <mat-sidenav-container class="customers-sidenav" [hasBackdrop]="true">
         <mat-sidenav-content>
           <mat-card appearance="outlined" class="app-feature-panel">
-            @if (loading()) {
-              <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
-            }
-
             <mat-card-content class="customers-panel-body">
               @if (error()) {
                 <p class="app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
               }
 
-              @if (!loading() && customers().length === 0 && !activeSearch()) {
+              @if (listLoading()) {
+                <div
+                  class="customer-skeleton-list"
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                  aria-label="Carregando lista de clientes"
+                >
+                  @for (s of skeletonSlots; track s) {
+                    <div class="customer-skeleton-card">
+                      <div class="customer-skeleton-card__text" aria-hidden="true">
+                        <div class="customer-skeleton-line customer-skeleton-line--title"></div>
+                        <div class="customer-skeleton-line customer-skeleton-line--mid"></div>
+                        <div class="customer-skeleton-line customer-skeleton-line--meta"></div>
+                      </div>
+                      <div class="customer-skeleton-card__actions">
+                        <ngx-skeleton-loader
+                          [count]="1"
+                          appearance="circle"
+                          [theme]="skeletonThemeFab"
+                          ariaLabel="Carregando ação editar"
+                        />
+                        <ngx-skeleton-loader
+                          [count]="1"
+                          appearance="circle"
+                          [theme]="skeletonThemeFab"
+                          ariaLabel="Carregando ação excluir"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else if (customers().length === 0 && !activeSearch()) {
                 <div class="empty-state" role="status">
                   <p class="empty-title mat-body-large">Nenhum cliente cadastrado</p>
                   <p class="empty-hint mat-body-medium app-text-muted">
                     Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
                   </p>
-                  <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
+                  <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="busy()">
                     Cadastrar primeiro cliente
                   </button>
                 </div>
-              } @else if (!loading() && customers().length === 0 && activeSearch()) {
+              } @else if (customers().length === 0 && activeSearch()) {
                 <div class="empty-state" role="status">
                   <p class="empty-title mat-body-large">Nenhum resultado encontrado</p>
                   <p class="empty-hint mat-body-medium app-text-muted">
@@ -111,7 +148,7 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
                           color="primary"
                           class="item-action-fab item-action-fab--edit"
                           (click)="openEdit(c.id)"
-                          [disabled]="loading()"
+                          [disabled]="busy()"
                           matTooltip="Editar"
                           aria-label="Editar cliente"
                         >
@@ -123,7 +160,7 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
                           color="warn"
                           class="item-action-fab item-action-fab--delete"
                           (click)="requestDelete(c)"
-                          [disabled]="loading()"
+                          [disabled]="busy()"
                           matTooltip="Excluir"
                           aria-label="Excluir cliente"
                         >
@@ -133,6 +170,18 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
                     </mat-list-item>
                   }
                 </mat-list>
+                @if (totalElements() > 0) {
+                  <mat-paginator
+                    class="customers-paginator"
+                    [length]="totalElements()"
+                    [pageIndex]="pageIndex()"
+                    [pageSize]="pageSize()"
+                    [pageSizeOptions]="pageSizeOptions"
+                    [showFirstLastButtons]="true"
+                    (page)="onListPageChange($event)"
+                    aria-label="Selecionar página da lista de clientes"
+                  />
+                }
               }
             </mat-card-content>
           </mat-card>
@@ -144,7 +193,7 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
           [fixedInViewport]="true"
           [opened]="editorOpen()"
           (openedChange)="onEditorDrawerOpenedChange($event)"
-          [disableClose]="loading() || customerForm.dirty"
+          [disableClose]="actionLoading() || customerForm.dirty"
           class="customers-editor-sidenav"
           aria-labelledby="customers-editor-title"
         >
@@ -157,7 +206,7 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
                 mat-icon-button
                 type="button"
                 (click)="requestCloseWithoutSave()"
-                [disabled]="loading()"
+                [disabled]="actionLoading()"
                 matTooltip="Fechar painel"
                 aria-label="Fechar painel de edição"
               >
@@ -210,12 +259,12 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
                   type="button"
                   class="cancel-editor"
                   (click)="requestCloseWithoutSave()"
-                  [disabled]="loading()"
+                  [disabled]="actionLoading()"
                   matTooltip="Cancelar edição e fechar o painel"
                 >
                   Cancelar
                 </button>
-                <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || loading()">
+                <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || actionLoading()">
                   {{ selected() ? 'Salvar' : 'Cadastrar' }}
                 </button>
               </div>
@@ -340,20 +389,23 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
       .customer-list {
         padding: 0;
         margin-top: var(--app-space-2);
-        border-radius: var(--app-radius-sm);
-        overflow: hidden;
-        outline: 1px solid var(--mat-sys-outline-variant);
-        outline-offset: -1px;
+        background: transparent;
+      }
+
+      .customer-list ::ng-deep mat-list-item.customer-item + mat-list-item.customer-item {
+        margin-top: var(--app-space-3);
       }
 
       .customer-item {
         height: auto !important;
         min-height: 4.75rem;
         align-items: center;
-      }
-
-      .customer-item:not(:last-of-type) {
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        box-sizing: border-box;
+        border-radius: var(--app-radius-md);
+        border: 1px solid var(--mat-sys-outline-variant);
+        background-color: var(--mat-sys-surface-container-low);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--mat-sys-on-surface) 7%, transparent);
+        overflow: hidden;
       }
 
       .customer-item ::ng-deep .mat-mdc-list-item-meta {
@@ -407,7 +459,10 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
       }
 
       .customer-item-selected {
-        background-color: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+        border-color: color-mix(in srgb, var(--mat-sys-primary) 55%, var(--mat-sys-outline-variant));
+        background-color: color-mix(in srgb, var(--mat-sys-primary) 10%, var(--mat-sys-surface-container-low));
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--mat-sys-primary) 22%, transparent),
+          0 1px 4px color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
       }
 
       .editor-toolbar {
@@ -445,16 +500,38 @@ import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confir
       .actions-row .cancel-editor {
         margin-inline-end: auto;
       }
+
     `
   ]
 })
 export class CustomersPage {
-  readonly loading = signal(false);
+  readonly listLoading = signal(false);
+  readonly actionLoading = signal(false);
+  readonly busy = computed(() => this.listLoading() || this.actionLoading());
+
   readonly error = signal<string | null>(null);
   readonly customers = signal<CustomerResponse[]>([]);
   readonly selected = signal<CustomerResponse | null>(null);
   /** Painel lateral (mat-sidenav) aberto. */
   readonly editorOpen = signal(false);
+
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(10);
+  readonly totalElements = signal(0);
+
+  readonly pageSizeOptions = [5, 10, 25];
+  readonly skeletonSlots = [0, 1, 2, 3, 4, 5];
+
+  /** Espelha `--customers-skeleton-fill` / `--customers-skeleton-shimmer-mid` em `feature-pages.scss`. */
+  readonly skeletonThemeFab: Record<string, string> = {
+    width: '40px',
+    height: '40px',
+    margin: '0',
+    'margin-bottom': '0',
+    '--ngx-skeleton-loader-base-color': 'var(--customers-skeleton-fill)',
+    '--ngx-skeleton-loader-light-mode-color': 'var(--customers-skeleton-shimmer-mid)',
+    '--ngx-skeleton-loader-light-mode-color-to': 'rgba(255, 255, 255, 0)'
+  };
 
   readonly searchControl = new FormControl('', { nonNullable: true });
 
@@ -473,7 +550,10 @@ export class CustomersPage {
   constructor() {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.reload());
+      .subscribe(() => {
+        this.pageIndex.set(0);
+        this.reload();
+      });
     this.reload();
   }
 
@@ -489,7 +569,7 @@ export class CustomersPage {
 
   /** Fecha o drawer; com alterações no formulário, pede confirmação em diálogo. */
   requestCloseWithoutSave(): void {
-    if (this.loading()) return;
+    if (this.actionLoading()) return;
     if (!this.customerForm.dirty) {
       this.clearSelection();
       return;
@@ -527,24 +607,40 @@ export class CustomersPage {
     return `${label} inválido.`;
   }
 
-  reload() {
+  reload(): void {
     const q = this.searchControl.value.trim();
-    this.loading.set(true);
+    this.listLoading.set(true);
     this.error.set(null);
-    this.api.list(q || undefined).subscribe({
-      next: (list) => {
-        this.customers.set(list);
-        this.loading.set(false);
+    this.api.list(q || undefined, this.pageIndex(), this.pageSize()).subscribe({
+      next: (res) => {
+        if (res.content.length === 0 && res.totalElements > 0 && res.totalPages > 0 && res.page >= res.totalPages) {
+          this.pageIndex.set(Math.max(0, res.totalPages - 1));
+          this.listLoading.set(false);
+          this.reload();
+          return;
+        }
+        this.customers.set(res.content);
+        this.totalElements.set(res.totalElements);
+        if (res.page !== this.pageIndex()) {
+          this.pageIndex.set(res.page);
+        }
+        this.listLoading.set(false);
         const sel = this.selected();
-        if (sel && !list.some((c) => c.id === sel.id)) {
+        if (sel && !res.content.some((c) => c.id === sel.id)) {
           this.clearSelection();
         }
       },
       error: () => {
-        this.loading.set(false);
+        this.listLoading.set(false);
         this.error.set('Falha ao carregar clientes (verifique login/API).');
       }
     });
+  }
+
+  onListPageChange(ev: PageEvent): void {
+    this.pageIndex.set(ev.pageIndex);
+    this.pageSize.set(ev.pageSize);
+    this.reload();
   }
 
   openCreate(): void {
@@ -554,7 +650,7 @@ export class CustomersPage {
   }
 
   openEdit(id: string) {
-    this.loading.set(true);
+    this.actionLoading.set(true);
     this.error.set(null);
     this.api.get(id).subscribe({
       next: (c) => {
@@ -566,10 +662,10 @@ export class CustomersPage {
           phone: c.phone,
           document: c.document
         });
-        this.loading.set(false);
+        this.actionLoading.set(false);
       },
       error: () => {
-        this.loading.set(false);
+        this.actionLoading.set(false);
         this.error.set('Falha ao carregar o cliente.');
       }
     });
@@ -586,28 +682,30 @@ export class CustomersPage {
     if (this.customerForm.invalid) return;
     const v = this.customerForm.getRawValue();
     if (row) {
-      this.loading.set(true);
+      this.actionLoading.set(true);
       this.error.set(null);
       this.api.update(row.id, v).subscribe({
         next: () => {
           this.clearSelection();
+          this.actionLoading.set(false);
           this.reload();
         },
         error: () => {
-          this.loading.set(false);
+          this.actionLoading.set(false);
           this.error.set('Falha ao atualizar cliente.');
         }
       });
     } else {
-      this.loading.set(true);
+      this.actionLoading.set(true);
       this.error.set(null);
       this.api.create(v).subscribe({
         next: () => {
           this.clearSelection();
+          this.actionLoading.set(false);
           this.reload();
         },
         error: () => {
-          this.loading.set(false);
+          this.actionLoading.set(false);
           this.error.set('Falha ao cadastrar cliente.');
         }
       });
@@ -615,7 +713,7 @@ export class CustomersPage {
   }
 
   requestDelete(customer: CustomerResponse): void {
-    if (this.loading()) return;
+    if (this.busy()) return;
     this.dialog
       .open(CustomersDeleteConfirmDialogComponent, {
         width: 'min(calc(100vw - 48px), 26rem)',
@@ -632,17 +730,18 @@ export class CustomersPage {
   }
 
   remove(id: string) {
-    this.loading.set(true);
+    this.actionLoading.set(true);
     this.error.set(null);
     this.api.delete(id).subscribe({
       next: () => {
         if (this.selected()?.id === id) {
           this.clearSelection();
         }
+        this.actionLoading.set(false);
         this.reload();
       },
       error: () => {
-        this.loading.set(false);
+        this.actionLoading.set(false);
         this.error.set('Falha ao excluir cliente.');
       }
     });
