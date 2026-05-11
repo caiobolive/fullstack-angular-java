@@ -4,20 +4,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 
 import { CustomersApi, type CustomerResponse } from '../../api/customers.api';
-import { editorPanelAnimations } from '../../shared/animations/editor-panel.animations';
+import { CustomersCloseUnsavedDialogComponent } from './customers-close-unsaved-dialog.component';
+import { CustomersDeleteConfirmDialogComponent } from './customers-delete-confirm-dialog.component';
 
 @Component({
   selector: 'app-customers-page',
-  animations: [editorPanelAnimations],
   imports: [
     ReactiveFormsModule,
     DatePipe,
@@ -26,35 +28,19 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatDividerModule,
     MatListModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatSidenavModule,
+    MatTooltipModule,
+    MatDialogModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="app-feature-page">
-      <header>
-        <h1 class="mat-headline-medium page-title">Clientes</h1>
-        <p class="mat-body-medium app-feature-page__subtitle">Cadastro com formulários reativos e validações.</p>
-      </header>
-
-      <mat-card appearance="outlined" class="app-feature-panel">
-        @if (loading()) {
-          <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
-        }
-
-        <mat-card-header class="app-feature-panel-head">
-          <mat-card-title>Lista</mat-card-title>
-          <div class="toolbar">
-            <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
-              Novo cliente
-            </button>
-            <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
-          </div>
-        </mat-card-header>
-
-        <mat-card-content class="customers-panel-body">
-          <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+    <div class="app-feature-page customers-page">
+      <header class="customers-page-header">
+        <h1 class="mat-headline-medium app-feature-page__title customers-page-title">Clientes</h1>
+        <div class="customers-page-tools">
+          <mat-form-field appearance="outline" class="customers-inline-search" subscriptSizing="dynamic">
             <mat-label>Buscar</mat-label>
             <mat-icon matPrefix>search</mat-icon>
             <input
@@ -65,146 +51,277 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
               [formControl]="searchControl"
             />
           </mat-form-field>
+          <div class="toolbar">
+            <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
+              Novo cliente
+            </button>
+            <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
+          </div>
+        </div>
+      </header>
 
-          @if (error()) {
-            <p class="app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
-          }
+      <mat-sidenav-container class="customers-sidenav" [hasBackdrop]="true">
+        <mat-sidenav-content>
+          <mat-card appearance="outlined" class="app-feature-panel">
+            @if (loading()) {
+              <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
+            }
 
-          @if (!loading() && customers().length === 0 && !activeSearch()) {
-            <div class="empty-state" role="status">
-              <p class="empty-title mat-body-large">Nenhum cliente cadastrado</p>
-              <p class="empty-hint mat-body-medium app-text-muted">
-                Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
-              </p>
-              <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
-                Cadastrar primeiro cliente
-              </button>
-            </div>
-          } @else if (!loading() && customers().length === 0 && activeSearch()) {
-            <div class="empty-state" role="status">
-              <p class="empty-title mat-body-large">Nenhum resultado encontrado</p>
-              <p class="empty-hint mat-body-medium app-text-muted">
-                Ajuste o termo de busca ou limpe o campo para ver todos os clientes.
-              </p>
-            </div>
-          } @else {
-            <mat-list class="customer-list">
-              @for (c of customers(); track c.id; let last = $last) {
-                <mat-list-item
-                  lines="3"
-                  class="customer-item"
-                  [class.customer-item-selected]="editorOpen() && selected()?.id === c.id"
-                >
-                  <div matListItemTitle>{{ c.name }}</div>
-                  <div matListItemLine>{{ c.email }} · {{ c.phone }}</div>
-                  <div matListItemLine class="dim-line app-text-muted">
-                    Doc: {{ c.document }} · Criado {{ c.createdAt | date: 'short' }} · Atualizado
-                    {{ c.updatedAt | date: 'short' }} · Owner: {{ c.ownerId }}
-                  </div>
-                  <div matListItemMeta class="item-actions">
-                    <button mat-stroked-button type="button" (click)="openEdit(c.id)" [disabled]="loading()">
-                      Editar
-                    </button>
-                    <button mat-flat-button color="warn" type="button" (click)="remove(c.id)" [disabled]="loading()">
-                      Excluir
-                    </button>
-                  </div>
-                </mat-list-item>
-                @if (!last) {
-                  <mat-divider />
-                }
-              }
-            </mat-list>
-          }
-        </mat-card-content>
-      </mat-card>
-
-      @if (editorOpen()) {
-        <div class="editor-host" [@editorPanel]>
-          <mat-card appearance="outlined" class="app-feature-panel editor">
-            <mat-card-content>
-              <div class="editor-toolbar">
-                <h2 class="mat-headline-small editor-title">{{ selected() ? 'Editar cliente' : 'Novo cliente' }}</h2>
-                <button mat-stroked-button type="button" (click)="clearSelection()" [disabled]="loading()">
-                  Voltar à lista
-                </button>
-              </div>
-
-              @if (selected(); as sel) {
-                <p class="meta-sub mat-body-small app-text-muted">
-                  ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
-                </p>
+            <mat-card-content class="customers-panel-body">
+              @if (error()) {
+                <p class="app-inline-alert-error mat-body-medium" role="alert">{{ error() }}</p>
               }
 
-              <form class="app-feature-form-stack" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
-                <mat-form-field appearance="outline">
-                  <mat-label>Nome</mat-label>
-                  <input matInput type="text" formControlName="name" autocomplete="name" />
-                  @if (showErr(customerForm.controls.name)) {
-                    <mat-error>{{ errMsg(customerForm.controls.name, 'Nome') }}</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>E-mail</mat-label>
-                  <input matInput type="email" formControlName="email" autocomplete="email" />
-                  @if (showErr(customerForm.controls.email)) {
-                    <mat-error>{{ errMsg(customerForm.controls.email, 'E-mail') }}</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Telefone</mat-label>
-                  <input matInput type="text" formControlName="phone" autocomplete="tel" />
-                  @if (showErr(customerForm.controls.phone)) {
-                    <mat-error>{{ errMsg(customerForm.controls.phone, 'Telefone') }}</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>CPF ou CNPJ</mat-label>
-                  <input matInput type="text" formControlName="document" />
-                  @if (showErr(customerForm.controls.document)) {
-                    <mat-error>{{ errMsg(customerForm.controls.document, 'Documento') }}</mat-error>
-                  }
-                </mat-form-field>
-
-                <div class="actions-row">
-                  <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || loading()">
-                    {{ selected() ? 'Salvar' : 'Cadastrar' }}
+              @if (!loading() && customers().length === 0 && !activeSearch()) {
+                <div class="empty-state" role="status">
+                  <p class="empty-title mat-body-large">Nenhum cliente cadastrado</p>
+                  <p class="empty-hint mat-body-medium app-text-muted">
+                    Que tal adicionar o primeiro? Use o botão acima ou cadastre direto aqui.
+                  </p>
+                  <button mat-flat-button color="primary" type="button" (click)="openCreate()" [disabled]="loading()">
+                    Cadastrar primeiro cliente
                   </button>
                 </div>
-              </form>
+              } @else if (!loading() && customers().length === 0 && activeSearch()) {
+                <div class="empty-state" role="status">
+                  <p class="empty-title mat-body-large">Nenhum resultado encontrado</p>
+                  <p class="empty-hint mat-body-medium app-text-muted">
+                    Ajuste o termo de busca ou limpe o campo para ver todos os clientes.
+                  </p>
+                </div>
+              } @else {
+                <mat-list class="customer-list" role="list">
+                  @for (c of customers(); track c.id) {
+                    <mat-list-item
+                      class="customer-item"
+                      [class.customer-item-selected]="editorOpen() && selected()?.id === c.id"
+                    >
+                      <div matListItemTitle class="customer-block">
+                        <div class="customer-name">{{ c.name }}</div>
+                        <div class="customer-contact mat-body-medium">{{ c.email }} · {{ c.phone }}</div>
+                        <div class="customer-meta mat-body-small app-text-muted">
+                          Doc: {{ c.document }} · Criado {{ c.createdAt | date: 'short' }} · Atualizado
+                          {{ c.updatedAt | date: 'short' }} · Owner: {{ c.ownerId }}
+                        </div>
+                      </div>
+                      <div matListItemMeta class="item-actions">
+                        <button
+                          mat-mini-fab
+                          type="button"
+                          color="primary"
+                          class="item-action-fab item-action-fab--edit"
+                          (click)="openEdit(c.id)"
+                          [disabled]="loading()"
+                          matTooltip="Editar"
+                          aria-label="Editar cliente"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          mat-mini-fab
+                          type="button"
+                          color="warn"
+                          class="item-action-fab item-action-fab--delete"
+                          (click)="requestDelete(c)"
+                          [disabled]="loading()"
+                          matTooltip="Excluir"
+                          aria-label="Excluir cliente"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </mat-list-item>
+                  }
+                </mat-list>
+              }
             </mat-card-content>
           </mat-card>
-        </div>
-      }
+        </mat-sidenav-content>
+
+        <mat-sidenav
+          position="end"
+          mode="over"
+          [fixedInViewport]="true"
+          [opened]="editorOpen()"
+          (openedChange)="onEditorDrawerOpenedChange($event)"
+          [disableClose]="loading() || customerForm.dirty"
+          class="customers-editor-sidenav"
+          aria-labelledby="customers-editor-title"
+        >
+          <div class="editor-drawer-panel">
+            <div class="editor-toolbar">
+              <h2 id="customers-editor-title" class="mat-headline-small editor-title">
+                {{ selected() ? 'Editar cliente' : 'Novo cliente' }}
+              </h2>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="requestCloseWithoutSave()"
+                [disabled]="loading()"
+                matTooltip="Fechar painel"
+                aria-label="Fechar painel de edição"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            @if (selected(); as sel) {
+              <p class="meta-sub mat-body-small app-text-muted">
+                ID: {{ sel.id }} · Atualizado em {{ sel.updatedAt | date: 'short' }}
+              </p>
+            }
+
+            <form class="app-feature-form-stack" [formGroup]="customerForm" (ngSubmit)="submitCustomerForm()">
+              <mat-form-field appearance="outline">
+                <mat-label>Nome</mat-label>
+                <input matInput type="text" formControlName="name" autocomplete="name" />
+                @if (showErr(customerForm.controls.name)) {
+                  <mat-error>{{ errMsg(customerForm.controls.name, 'Nome') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>E-mail</mat-label>
+                <input matInput type="email" formControlName="email" autocomplete="email" />
+                @if (showErr(customerForm.controls.email)) {
+                  <mat-error>{{ errMsg(customerForm.controls.email, 'E-mail') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Telefone</mat-label>
+                <input matInput type="text" formControlName="phone" autocomplete="tel" />
+                @if (showErr(customerForm.controls.phone)) {
+                  <mat-error>{{ errMsg(customerForm.controls.phone, 'Telefone') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>CPF ou CNPJ</mat-label>
+                <input matInput type="text" formControlName="document" />
+                @if (showErr(customerForm.controls.document)) {
+                  <mat-error>{{ errMsg(customerForm.controls.document, 'Documento') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="actions-row">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="cancel-editor"
+                  (click)="requestCloseWithoutSave()"
+                  [disabled]="loading()"
+                  matTooltip="Cancelar edição e fechar o painel"
+                >
+                  Cancelar
+                </button>
+                <button mat-flat-button color="primary" type="submit" [disabled]="customerForm.invalid || loading()">
+                  {{ selected() ? 'Salvar' : 'Cadastrar' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-sidenav>
+      </mat-sidenav-container>
     </div>
   `,
   styles: [
     `
+      .customers-page {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: var(--app-space-2);
+      }
+
+      .customers-sidenav {
+        flex: 1;
+        min-height: min(70vh, 36rem);
+        width: 100%;
+        background: transparent;
+      }
+
+      :host ::ng-deep .customers-sidenav .mat-drawer-backdrop.mat-drawer-shown {
+        background-color: color-mix(in srgb, var(--mat-sys-on-surface) 22%, transparent);
+      }
+
+      @supports (backdrop-filter: blur(1px)) {
+        :host ::ng-deep .customers-sidenav .mat-drawer-backdrop.mat-drawer-shown {
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+        }
+      }
+
+      :host ::ng-deep .customers-editor-sidenav.mat-drawer {
+        width: min(100vw - var(--app-space-4), 28rem);
+        border-radius: var(--app-radius-lg) 0 0 var(--app-radius-lg);
+        border-inline-end: none;
+        box-shadow: none;
+      }
+
+      :host ::ng-deep .customers-editor-sidenav .mat-drawer-inner-container {
+        overflow-x: hidden;
+      }
+
+      .editor-drawer-panel {
+        box-sizing: border-box;
+        min-height: 100%;
+        padding: var(--app-space-4) var(--app-space-4) var(--app-space-6);
+        background-color: var(--mat-sys-surface-container-lowest);
+      }
+
+      .customers-page-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--app-space-3) var(--app-space-4);
+        padding-bottom: var(--app-space-4);
+        margin-bottom: var(--app-space-1);
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        overflow: visible;
+      }
+
+      .customers-page-title {
+        margin: 0;
+        flex: 0 1 auto;
+        min-width: min(100%, 12rem);
+      }
+
+      .customers-page-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--app-space-3);
+        flex: 1 1 16rem;
+        overflow: visible;
+      }
+
+      .customers-inline-search {
+        flex: 1 1 12rem;
+        width: min(100%, 22rem);
+        max-width: min(100%, 28rem);
+      }
+
       .toolbar {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--app-space-2);
         align-items: center;
+        flex: 0 0 auto;
       }
 
       .customers-panel-body {
-        padding-top: 8px !important;
-      }
-
-      .search-field {
-        width: 100%;
-        max-width: 440px;
-        margin-bottom: 8px;
+        padding-top: var(--app-space-4) !important;
       }
 
       .empty-state {
-        margin-top: 16px;
-        padding: 28px 20px;
+        margin-top: var(--app-space-2);
+        padding: var(--app-space-6) var(--app-space-5);
         border: 1px dashed var(--mat-sys-outline-variant);
-        border-radius: 12px;
+        border-radius: var(--app-radius-md);
         text-align: center;
         background-color: var(--mat-sys-surface-container-low);
       }
@@ -215,68 +332,118 @@ import { editorPanelAnimations } from '../../shared/animations/editor-panel.anim
       }
 
       .empty-hint {
-        margin: 8px auto 16px;
-        max-width: 360px;
-        line-height: 1.45;
+        margin: var(--app-space-2) auto var(--app-space-4);
+        max-width: 22.5rem;
+        line-height: 1.55;
       }
 
       .customer-list {
         padding: 0;
-        margin-top: 8px;
+        margin-top: var(--app-space-2);
+        border-radius: var(--app-radius-sm);
+        overflow: hidden;
+        outline: 1px solid var(--mat-sys-outline-variant);
+        outline-offset: -1px;
       }
 
       .customer-item {
         height: auto !important;
-        min-height: 72px;
-        align-items: flex-start;
+        min-height: 4.75rem;
+        align-items: center;
+      }
+
+      .customer-item:not(:last-of-type) {
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
       }
 
       .customer-item ::ng-deep .mat-mdc-list-item-meta {
         align-self: center;
       }
 
-      .dim-line {
-        font-size: 0.8rem;
+      .customer-block {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--app-space-1);
+        padding-block: var(--app-space-2);
+        min-width: 0;
+        width: 100%;
+      }
+
+      .customer-name {
+        font-weight: 600;
+        font-size: 1rem;
+        line-height: 1.35;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .customer-contact {
+        margin: 0;
+        line-height: 1.4;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .customer-meta {
+        margin: 0;
+        line-height: 1.4;
+        font-size: 0.8125rem;
       }
 
       .item-actions {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--app-space-3);
         justify-content: flex-end;
+        align-items: center;
+      }
+
+      .item-action-fab--edit.mat-mdc-mini-fab {
+        --mdc-fab-container-color: var(--mat-sys-primary);
+        --mat-fab-foreground-color: var(--mat-sys-on-primary);
+      }
+
+      .item-action-fab--delete.mat-mdc-mini-fab {
+        --mdc-fab-container-color: var(--mat-sys-error);
+        --mat-fab-foreground-color: var(--mat-sys-on-error);
       }
 
       .customer-item-selected {
-        background-color: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+        background-color: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
       }
 
       .editor-toolbar {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 8px;
+        align-items: flex-start;
+        gap: var(--app-space-3);
+        margin-bottom: var(--app-space-4);
+        padding-bottom: var(--app-space-3);
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
       }
 
       .editor-title {
         margin: 0;
+        flex: 1;
+        min-width: 0;
+        padding-inline-end: var(--app-space-2);
       }
 
       .meta-sub {
-        margin: 0 0 12px;
+        margin: 0 0 var(--app-space-4);
       }
 
       .actions-row {
         display: flex;
-        gap: 8px;
+        flex-wrap: wrap;
+        gap: var(--app-space-2);
         align-items: center;
-        margin-top: 8px;
+        justify-content: flex-end;
+        margin-top: var(--app-space-4);
+        padding-top: var(--app-space-2);
       }
 
-      .editor-host {
-        display: block;
-        width: 100%;
+      .actions-row .cancel-editor {
+        margin-inline-end: auto;
       }
     `
   ]
@@ -286,7 +453,7 @@ export class CustomersPage {
   readonly error = signal<string | null>(null);
   readonly customers = signal<CustomerResponse[]>([]);
   readonly selected = signal<CustomerResponse | null>(null);
-  /** Formulário visível apenas após “Novo cliente” ou “Editar”. */
+  /** Painel lateral (mat-sidenav) aberto. */
   readonly editorOpen = signal(false);
 
   readonly searchControl = new FormControl('', { nonNullable: true });
@@ -294,6 +461,7 @@ export class CustomersPage {
   private readonly api = inject(CustomersApi);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
 
   readonly customerForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -307,6 +475,37 @@ export class CustomersPage {
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.reload());
     this.reload();
+  }
+
+  /**
+   * Fecho por backdrop ou Escape: sincroniza estado (evita chamar `clearSelection` em duplicado
+   * quando o fecho já veio do botão, pois nesse caso `editorOpen` já é false).
+   */
+  onEditorDrawerOpenedChange(opened: boolean): void {
+    if (!opened && this.editorOpen()) {
+      this.clearSelection();
+    }
+  }
+
+  /** Fecha o drawer; com alterações no formulário, pede confirmação em diálogo. */
+  requestCloseWithoutSave(): void {
+    if (this.loading()) return;
+    if (!this.customerForm.dirty) {
+      this.clearSelection();
+      return;
+    }
+    this.dialog
+      .open(CustomersCloseUnsavedDialogComponent, {
+        width: 'min(calc(100vw - 48px), 26rem)',
+        autoFocus: 'first-tabbable'
+      })
+      .afterClosed()
+      .pipe(take(1))
+      .subscribe((confirmed) => {
+        if (confirmed === true) {
+          this.clearSelection();
+        }
+      });
   }
 
   activeSearch(): boolean {
@@ -415,10 +614,24 @@ export class CustomersPage {
     }
   }
 
+  requestDelete(customer: CustomerResponse): void {
+    if (this.loading()) return;
+    this.dialog
+      .open(CustomersDeleteConfirmDialogComponent, {
+        width: 'min(calc(100vw - 48px), 26rem)',
+        autoFocus: 'first-tabbable',
+        data: { name: customer.name }
+      })
+      .afterClosed()
+      .pipe(take(1))
+      .subscribe((confirmed) => {
+        if (confirmed === true) {
+          this.remove(customer.id);
+        }
+      });
+  }
+
   remove(id: string) {
-    if (!globalThis.confirm('Excluir este cliente? Esta ação não pode ser desfeita.')) {
-      return;
-    }
     this.loading.set(true);
     this.error.set(null);
     this.api.delete(id).subscribe({

@@ -22,7 +22,7 @@ import { AuthService } from '../../../core/auth/auth.service';
   ],
   template: `
     <div class="login-page">
-      <mat-card appearance="outlined" class="login-card">
+      <mat-card appearance="outlined" class="login-card app-feature-panel">
         <mat-card-header>
           <mat-card-title>Login</mat-card-title>
           <mat-card-subtitle>Acesse com sua conta</mat-card-subtitle>
@@ -86,35 +86,38 @@ import { AuthService } from '../../../core/auth/auth.service';
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        padding: 32px 16px 48px;
+        min-height: 60vh;
+        padding: var(--app-space-6) var(--app-space-4) var(--app-space-7);
       }
 
       .login-card {
         width: 100%;
-        max-width: 420px;
+        max-width: 26.25rem;
       }
 
       .login-form {
-        gap: 4px;
+        gap: var(--app-space-2);
       }
 
       .submit-row {
         display: flex;
         align-items: center;
-        gap: 16px;
-        margin-top: 12px;
+        gap: var(--app-space-4);
+        margin-top: var(--app-space-4);
       }
 
       .login-dev-hint {
-        margin-top: 20px;
+        margin-top: var(--app-space-5);
         margin-bottom: 0;
+        line-height: 1.5;
       }
 
       .login-dev-hint code {
-        padding: 2px 6px;
-        border-radius: 6px;
+        padding: var(--app-space-1) var(--app-space-2);
+        border-radius: var(--app-radius-sm);
         background-color: var(--mat-sys-surface-container-highest);
-        font-size: 0.85em;
+        color: var(--mat-sys-on-surface-variant);
+        font-size: 0.875rem;
       }
     `
   ]

@@ -3,7 +3,6 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -22,19 +21,20 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
-    MatDividerModule,
     MatProgressBarModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="app-feature-page">
-      <header>
-        <h1 class="mat-headline-medium page-title">Usuários</h1>
-        <p class="mat-body-medium app-feature-page__subtitle">Apenas administradores podem gerenciar usuários.</p>
+      <header class="app-feature-page-header">
+        <h1 class="mat-headline-medium app-feature-page__title">Usuários</h1>
+        <p class="mat-body-medium app-feature-page__subtitle">
+          Apenas administradores podem gerenciar usuários.
+        </p>
       </header>
 
       <mat-card appearance="outlined" class="app-feature-panel">
-        <mat-card-header>
+        <mat-card-header class="app-feature-panel-head users-create-head">
           <mat-card-title>Novo usuário</mat-card-title>
         </mat-card-header>
         <mat-card-content>
@@ -80,54 +80,50 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
           <mat-progress-bar mode="indeterminate" aria-label="Carregando lista" />
         }
 
-        <mat-card-header class="app-feature-panel-head">
+        <mat-card-header class="app-feature-panel-head users-list-head">
           <mat-card-title>Lista</mat-card-title>
           <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading()">Recarregar</button>
         </mat-card-header>
-
-        <mat-divider />
 
         <mat-card-content>
           @if (error()) {
             <p class="app-contained-alert-error mat-body-medium" role="alert">{{ error() }}</p>
           }
 
-          <div class="user-list">
+          <div class="user-list" role="list">
             @for (u of users(); track u.id) {
-              <mat-card class="user-row" appearance="outlined">
-                <mat-card-content>
-                  <div class="email-line mat-title-medium">{{ u.email }}</div>
-                  @if (drafts().get(u.id); as d) {
-                    <div class="row-controls">
-                      <mat-checkbox
-                        [checked]="d.enabled"
-                        [disabled]="isSelf(u)"
-                        (change)="toggleEnabled(u.id, $event.checked)"
-                      >
-                        Ativo
-                      </mat-checkbox>
-                      <mat-checkbox [checked]="d.roleUser" (change)="toggleRoleUser(u.id, $event.checked)">
-                        ROLE_USER
-                      </mat-checkbox>
-                      <mat-checkbox
-                        [checked]="d.roleAdmin"
-                        [disabled]="isSelf(u)"
-                        (change)="toggleRoleAdmin(u.id, $event.checked)"
-                      >
-                        ROLE_ADMIN
-                      </mat-checkbox>
-                      <button mat-flat-button color="primary" type="button" (click)="saveRow(u)" [disabled]="loading()">
-                        Salvar
-                      </button>
-                    </div>
-                    @if (isSelf(u)) {
-                      <small class="users-row-hint mat-body-small app-text-muted">
-                        Sua conta: não é possível desativar ou remover ROLE_ADMIN aqui.
-                      </small>
-                    }
+              <div class="user-row">
+                <div class="user-row-email mat-title-medium">{{ u.email }}</div>
+                @if (drafts().get(u.id); as d) {
+                  <div class="row-controls">
+                    <mat-checkbox
+                      [checked]="d.enabled"
+                      [disabled]="isSelf(u)"
+                      (change)="toggleEnabled(u.id, $event.checked)"
+                    >
+                      Ativo
+                    </mat-checkbox>
+                    <mat-checkbox [checked]="d.roleUser" (change)="toggleRoleUser(u.id, $event.checked)">
+                      ROLE_USER
+                    </mat-checkbox>
+                    <mat-checkbox
+                      [checked]="d.roleAdmin"
+                      [disabled]="isSelf(u)"
+                      (change)="toggleRoleAdmin(u.id, $event.checked)"
+                    >
+                      ROLE_ADMIN
+                    </mat-checkbox>
+                    <button mat-flat-button color="primary" type="button" (click)="saveRow(u)" [disabled]="loading()">
+                      Salvar
+                    </button>
+                  </div>
+                  @if (isSelf(u)) {
+                    <small class="users-row-hint mat-body-small app-text-muted">
+                      Sua conta: não é possível desativar ou remover ROLE_ADMIN aqui.
+                    </small>
                   }
-                </mat-card-content>
-              </mat-card>
+                }
+              </div>
             }
           </div>
         </mat-card-content>
@@ -135,39 +131,62 @@ type UserRowDraft = { enabled: boolean; roleUser: boolean; roleAdmin: boolean };
     </div>
   `,
   styles: `
+    .users-create-head {
+      border-bottom: 1px solid var(--mat-sys-outline-variant);
+    }
+
+    .users-list-head {
+      border-bottom: 1px solid var(--mat-sys-outline-variant);
+    }
+
     .users-create-form {
-      margin-top: 8px;
+      margin-top: var(--app-space-2);
     }
 
     .roles {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px 16px;
+      gap: var(--app-space-3) var(--app-space-4);
       align-items: center;
-      padding: 4px 0 8px;
+      padding: var(--app-space-1) 0 var(--app-space-2);
     }
 
     .user-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      margin-top: var(--app-space-3);
+      border-radius: var(--app-radius-sm);
+      overflow: hidden;
+      outline: 1px solid var(--mat-sys-outline-variant);
+      outline-offset: -1px;
     }
 
-    .email-line {
-      margin-bottom: 4px;
+    .user-row {
+      padding: var(--app-space-4);
+      background-color: var(--mat-sys-surface);
+    }
+
+    .user-row + .user-row {
+      border-top: 1px solid var(--mat-sys-outline-variant);
+    }
+
+    .user-row-email {
+      margin: 0 0 var(--app-space-2);
+      letter-spacing: -0.01em;
     }
 
     .row-controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: var(--app-space-3);
       align-items: center;
-      margin-top: 8px;
+      margin-top: var(--app-space-2);
     }
 
     .users-row-hint {
       display: block;
-      margin-top: 8px;
+      margin-top: var(--app-space-3);
+      line-height: 1.45;
     }
   `
 })

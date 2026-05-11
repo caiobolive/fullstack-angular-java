@@ -37,6 +37,18 @@ $app-dark-theme: mat.define-theme(
 
 :root {
   color-scheme: light;
+  /* Espaçamento (ritmo 4px) — Abordagem A */
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 24px;
+  --app-space-6: 32px;
+  --app-space-7: 40px;
+  --app-layout-max-width: 1200px;
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 16px;
   /* Tokens de motion (alinhar com `route-animations.ts` onde aplicável) */
   --app-motion-duration-short: 180ms;
   --app-motion-duration-medium: 260ms;
@@ -61,6 +73,11 @@ body {
   height: 100%;
   margin: 0;
   font-family: Inter, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   background-color: var(--mat-sys-surface-container-lowest);
   color: var(--mat-sys-on-surface);
 }
@@ -138,9 +155,7 @@ body {
 
 /* Campos de texto (outline): transição suave do contorno + estado focado */
 .mat-mdc-form-field {
-  transition:
-    opacity var(--app-motion-duration-short) var(--app-motion-easing-standard),
-    transform var(--app-motion-duration-short) var(--app-motion-easing-standard);
+  transition: opacity var(--app-motion-duration-short) var(--app-motion-easing-standard);
 }
 
 .mat-mdc-form-field .mat-mdc-text-field-wrapper {
@@ -158,20 +173,12 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
-    transform: translateY(-1px);
-  }
-
   .mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) .mat-mdc-text-field-wrapper {
     box-shadow: 0 2px 8px color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mat-mdc-form-field.mat-focused {
-    transform: none;
-  }
-
   .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
     box-shadow: none;
   }

@@ -29,8 +29,14 @@
 .nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--app-space-1);
   flex-wrap: wrap;
+}
+
+@media (min-width: 600px) {
+  .nav {
+    gap: var(--app-space-2);
+  }
 }
 
 .theme-trigger {
@@ -44,14 +50,20 @@
 
 .content {
   flex: 1;
-  padding: 16px 0 40px;
+  padding: var(--app-space-5) 0 var(--app-space-7);
 }
 
 .content-inner {
-  max-width: 1200px;
+  max-width: var(--app-layout-max-width);
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 var(--app-space-4);
   width: 100%;
+}
+
+@media (min-width: 600px) {
+  .content-inner {
+    padding-inline: var(--app-space-5);
+  }
 }
 
 /* Pilha em grid: mesma célula para crossfade + altura = ao maior dos dois em transição */

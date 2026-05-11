@@ -1,25 +1,41 @@
-// Etapa 7 — layout e alertas partilhados pelas páginas Material (clientes, usuários, login).
+// Etapa A — ritmo de layout, espaçamento e superfícies partilhadas (Material M3 tokens).
 
 .app-feature-page {
   width: 100%;
-  max-width: 960px;
+  max-width: var(--app-layout-max-width);
   margin-inline: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--app-space-5);
+  padding-block: 0 var(--app-space-6);
+}
+
+.app-feature-page-header {
+  padding-bottom: var(--app-space-2);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  margin-bottom: var(--app-space-1);
+}
+
+.app-feature-page__title {
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: var(--mat-sys-on-surface);
 }
 
 .app-feature-page__subtitle {
-  margin: 4px 0 0;
+  margin: var(--app-space-2) 0 0;
+  max-width: 42rem;
+  line-height: 1.55;
   color: var(--mat-sys-on-surface-variant);
 }
 
 .app-feature-panel {
   overflow: hidden;
+  border-radius: var(--app-radius-lg) !important;
 }
 
 .app-feature-panel mat-progress-bar {
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--app-radius-lg) var(--app-radius-lg) 0 0;
 }
 
 .app-feature-panel-head {
@@ -27,36 +43,47 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-top: 8px;
+  gap: var(--app-space-3) var(--app-space-4);
+  padding: var(--app-space-4) var(--app-space-4) var(--app-space-3);
+}
+
+.app-feature-panel-head .mat-mdc-card-title {
+  margin-bottom: 0;
+}
+
+.app-feature-panel > .mat-mdc-card-content {
+  padding-inline: var(--app-space-4) !important;
+  padding-bottom: var(--app-space-5) !important;
 }
 
 .app-feature-form-stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--app-space-3);
 }
 
 .app-feature-form-stack mat-form-field {
   width: 100%;
 }
 
-/** Erro em linha (texto). Transição de cores via tokens M3 em `styles.scss`. */
 .app-inline-alert-error {
-  margin: 8px 0;
+  margin: var(--app-space-2) 0;
+  padding: var(--app-space-2) var(--app-space-3);
+  border-radius: var(--app-radius-sm);
+  line-height: 1.45;
   color: var(--mat-sys-error);
+  background-color: color-mix(in srgb, var(--mat-sys-error) 8%, transparent);
 }
 
-/** Erro em faixa (error container). */
 .app-contained-alert-error {
-  margin: 12px 0;
-  padding: 10px 12px;
-  border-radius: 8px;
+  margin: var(--app-space-3) 0;
+  padding: var(--app-space-3) var(--app-space-4);
+  border-radius: var(--app-radius-md);
+  line-height: 1.45;
   background-color: var(--mat-sys-error-container);
   color: var(--mat-sys-on-error-container);
 }
 
-/** Texto secundário (superfície variante). */
 .app-text-muted {
   color: var(--mat-sys-on-surface-variant);
 }

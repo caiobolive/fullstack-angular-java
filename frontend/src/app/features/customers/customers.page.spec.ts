@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { MatDialogModule } from '@angular/material/dialog';
 
 import { CustomersPage } from './customers.page';
 
@@ -31,7 +32,7 @@ describe('CustomersPage', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CustomersPage],
+      imports: [CustomersPage, MatDialogModule],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideAnimations()]
     }).compileComponents();
 
