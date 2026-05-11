@@ -2,11 +2,13 @@ package com.fullstack.study.application;
 
 import com.fullstack.study.domain.Customer;
 import com.fullstack.study.infrastructure.CustomerRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,18 +23,22 @@ public class CustomerService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<Customer> list(String query) {
+	public Page<Customer> listPaged(String query, int page, int size) {
+		int safePage = Math.max(0, page);
+		int safeSize = Math.min(100, Math.max(1, size));
 		String term = normalizeSearch(query);
+		var sort = term.isEmpty() ? Sort.by(Sort.Direction.ASC, "name") : Sort.unsorted();
+		var pageable = PageRequest.of(safePage, safeSize, sort);
 		if (term.isEmpty()) {
 			if (currentUser.hasRole("ROLE_ADMIN")) {
-				return customerRepository.findAll();
+				return customerRepository.findAll(pageable);
 			}
-			return customerRepository.findAllByOwnerId(currentUser.requireUserId());
+			return customerRepository.findAllByOwnerId(currentUser.requireUserId(), pageable);
 		}
 		if (currentUser.hasRole("ROLE_ADMIN")) {
-			return customerRepository.searchAll(term);
+			return customerRepository.searchAll(term, pageable);
 		}
-		return customerRepository.searchByOwnerId(currentUser.requireUserId(), term);
+		return customerRepository.searchByOwnerId(currentUser.requireUserId(), term, pageable);
 	}
 
 	/** Remove curingas LIKE (% _) e limita tamanho para evitar consultas abusivas. */

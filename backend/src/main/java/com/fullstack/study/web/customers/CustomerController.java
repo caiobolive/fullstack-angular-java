@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -32,8 +31,18 @@ public class CustomerController {
 	}
 
 	@GetMapping
-	public List<CustomerResponse> list(@RequestParam(name = "q", required = false) String q) {
-		return customerService.list(q).stream().map(CustomerController::toResponse).toList();
+	public CustomerPageResponse list(
+			@RequestParam(name = "q", required = false) String q,
+			@RequestParam(name = "page", defaultValue = "0") int page,
+			@RequestParam(name = "size", defaultValue = "10") int size) {
+		var result = customerService.listPaged(q, page, size);
+		return new CustomerPageResponse(
+				result.getContent().stream().map(CustomerController::toResponse).toList(),
+				result.getNumber(),
+				result.getSize(),
+				result.getTotalElements(),
+				result.getTotalPages()
+		);
 	}
 
 	@GetMapping("/{id}")
@@ -70,6 +79,14 @@ public class CustomerController {
 				c.getUpdatedAt()
 		);
 	}
+
+	public record CustomerPageResponse(
+			java.util.List<CustomerResponse> content,
+			int page,
+			int size,
+			long totalElements,
+			int totalPages
+	) {}
 
 	public record CustomerUpsertRequest(
 			@NotBlank @Size(max = 200) String name,

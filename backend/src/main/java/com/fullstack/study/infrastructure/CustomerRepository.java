@@ -1,15 +1,16 @@
 package com.fullstack.study.infrastructure;
 
 import com.fullstack.study.domain.Customer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
-	List<Customer> findAllByOwnerId(UUID ownerId);
+	Page<Customer> findAllByOwnerId(UUID ownerId, Pageable pageable);
 
 	@Query("""
 			SELECT c FROM Customer c WHERE
@@ -19,7 +20,7 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 				OR LOWER(c.document) LIKE LOWER(CONCAT('%', :term, '%'))
 			ORDER BY c.name ASC
 			""")
-	List<Customer> searchAll(@Param("term") String term);
+	Page<Customer> searchAll(@Param("term") String term, Pageable pageable);
 
 	@Query("""
 			SELECT c FROM Customer c WHERE c.ownerId = :ownerId AND (
@@ -30,5 +31,5 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 			)
 			ORDER BY c.name ASC
 			""")
-	List<Customer> searchByOwnerId(@Param("ownerId") UUID ownerId, @Param("term") String term);
+	Page<Customer> searchByOwnerId(@Param("ownerId") UUID ownerId, @Param("term") String term, Pageable pageable);
 }
