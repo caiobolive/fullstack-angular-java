@@ -1,23 +1,13 @@
-# Plano — Fullstack Angular + Spring Boot (referência + prompt para recriar projeto semelhante)
+# Plano — Fullstack Angular + Spring Boot
 
-Este documento descreve **premissas**, **ordem prática do que foi desenvolvido neste monorepo**, **armadilhas de setup que apareceram no caminho**, e um **bloco final copiável como prompt** para gerar outro projeto no mesmo estilo.
+Este documento descreve **premissas**, **ordem prática do que foi desenvolvido neste monorepo**, **armadilhas de setup que apareceram no caminho** e **checklists** para quem for clonar, evoluir ou operar o projeto.
 
-**Domínio principal do front (alinhado a teste técnico Angular Pleno):** gestão de **clientes** (CRUD). **Usuários** permanecem para **RBAC** (`ROLE_ADMIN` / `ROLE_USER`) e tela admin.
+**Domínio principal do frontend:** gestão de **clientes** (CRUD). **Usuários** permanecem para **RBAC** (`ROLE_ADMIN` / `ROLE_USER`) e área de administração.
 
 **Versões efetivas neste repositório (verificação):**
 - **Backend**: Spring Boot **4.0.5**, Java **21**, Maven.
 - **Frontend**: Angular **~21.2.x**, TypeScript **~5.9**, Karma + Jasmine; **Puppeteer** para apontar o Chrome usado nos testes.
 - **Banco**: PostgreSQL **17** (imagem `postgres:17-alpine` no Docker Compose).
-
----
-
-## Como usar este arquivo como “prompt mestre”
-
-1. Copie a seção **Prompt para recriar um projeto semelhante** (final do documento).
-2. Cole no assistente com estas instruções extras:
-   - “Siga a ordem dos passos; pare para eu validar após infra + login funcionando.”
-   - “Use os endpoints `/api/v1` e o mesmo modelo de auth (JWT HS256 + refresh com hash).”
-3. Se algo falhar no seu ambiente, cruze com **Armadilhas comuns de setup** abaixo.
 
 ---
 
@@ -133,7 +123,7 @@ docker compose up -d
 - `db/migration/V1__init.sql`: tabelas `users`, `user_roles`, `items` (legado), `refresh_tokens` + índices.
 - `db/migration/V2__clients_replace_items.sql`: remove `items` e cria **`clients`** com índice em `owner_id`.
 - `db/migration/V3__customers_rename_from_clients.sql`: renomeia **`clients` → `customers`** (API `/api/v1/customers`).
-- Tabela **`customers`** (modelo alinhado ao briefing + ownership):
+- Tabela **`customers`** (modelo de domínio + ownership):
   - Identificador UUID, **nome**, **e-mail**, **telefone**, **documento** (CPF ou CNPJ — um campo com validação no DTO ou dois campos mutuamente exclusivos, conforme decisão do projeto),
   - **`owner_id`** referenciando o usuário dono do registro (base das regras RBAC),
   - **`created_at`**, **`updated_at`** (listagem deve expor pelo menos uma data; recomenda-se mostrar ambas na UI).
@@ -141,7 +131,7 @@ docker compose up -d
 ### 5.4 Domínio
 - `Role` enum (`ROLE_ADMIN`, `ROLE_USER`).
 - `UserAccount` (`users` / `user_roles` como `@ElementCollection`).
-- **`Customer`** (entidade JPA; inglês *customer*) com `ownerId` para ownership e campos do briefing (nome, email, telefone, documento, timestamps).
+- **`Customer`** (entidade JPA; inglês *customer*) com `ownerId` para ownership e campos de negócio (nome, email, telefone, documento, timestamps).
 - `RefreshToken` com `token_hash`, expiração e revogação.
 
 ### 5.5 Autenticação e tokens
@@ -205,21 +195,19 @@ docker compose up -d
 
 ### 6.4 Features
 - **`login`**: página de login.
-- **`customers`** (rota **`/customers`**; legado **`/clients`** redireciona): CRUD consumindo **`/api/v1/customers`** **ou** (somente para protótipo isolado) JSON local + serviço que simula API — preferência neste monorepo: **API real + JWT**, para valorizar interceptor/guards.
+- **`customers`** (rota **`/customers`**; legado **`/clients`** redireciona): CRUD contra **`/api/v1/customers`** com **API real + JWT** (interceptor e guards no fluxo).
 - **`users` (admin)**: lista, criar usuário, editar **roles/enabled** com `PATCH` (`UsersApi.update`).
 - **`app.component`**: navegação condicional (link **Usuários** só para admin).
 
-### 6.5 Escopo de UI — clientes (briefing teste técnico Angular Pleno)
+### 6.5 Escopo de UI — clientes
 
-Referência externa típica: CRUD de clientes em até ~3 dias, com foco em **Reactive Forms**, boa organização e testes como diferencial.
-
-Requisitos que o plano considera **obrigatórios** para a feature clientes:
+Requisitos **funcionais** previstos para a feature **clientes**:
 1. **Listagem**: nome, e-mail, telefone, CPF **ou** CNPJ, data de **criação ou atualização** (ideal: exibir `createdAt` / `updatedAt` quando o backend expuser ambos).
 2. **Cadastro e edição**: **formulários reativos** (`FormBuilder` / `FormGroup`) com **validações** e **mensagens de erro** por campo.
 3. **Exclusão**: fluxo com **confirmação** (dialog ou `confirm` mínimo).
 4. **Biblioteca de UI**: opcional; se usar, preferir **Angular Material** de forma consistente.
 
-Requisitos **já atendidos no monorepo como “plus”** em relação ao briefing: lazy loading, guards, interceptor, autenticação JWT — mantidos em paralelo à feature clientes.
+Além disso, o monorepo inclui **lazy loading**, **guards**, **interceptor** e **autenticação JWT** integrados ao mesmo fluxo.
 
 ### 6.6 Testes frontend
 - Karma + Jasmine; `karma.conf.js` define `CHROME_BIN` via **`puppeteer.executablePath()`** para estabilidade no Windows.
@@ -285,60 +273,8 @@ Requisitos **já atendidos no monorepo como “plus”** em relação ao briefin
 
 ---
 
-## 11) Entrega (checklist estilo teste técnico)
+## 11) Entrega — checklist
 
-- Repositório Git (GitHub público ou privado conforme instrução da empresa).
-- **README** com: como subir Docker/backend/front, credenciais seed, campos da lista de clientes e decisão **API vs JSON local** (se aplicável).
+- Repositório Git (público ou privado, conforme política do projeto).
+- **README** com: como subir Docker/backend/front, credenciais seed, campos da lista de clientes e como apontar a **URL da API** em cada ambiente.
 - **Opcional**: link de deploy (GitHub Pages, Vercel, etc.).
-
----
-
-## Prompt para recriar um projeto semelhante (copiar/colar)
-
-```
-Quero criar um monorepo de estudo fullstack desacoplado com:
-
-Stack:
-- Backend: Java 21 + Spring Boot (última estável) + Maven
-- Frontend: Angular (última estável) + TypeScript estrito
-- DB: PostgreSQL (Docker Compose)
-- Auth: JWT access token (HS256, OAuth2 Resource Server) + refresh token persistido com HASH (SHA-256) + rotação no refresh
-- RBAC: ROLE_ADMIN e ROLE_USER no JWT como lista "roles", convertida para GrantedAuthority
-- Senhas: BCrypt
-
-Requisitos backend:
-- Pacotes: config, domain, infrastructure, application, web
-- Flyway migrations criando: users, user_roles (element collection), customers (via clients em V2 + rename V3; nome, email, telefone, documento CPF ou CNPJ, owner_id UUID, timestamps), refresh_tokens
-- Endpoints:
-  - POST /api/v1/auth/login, POST /api/v1/auth/refresh
-  - GET /api/v1/health
-  - CRUD /api/v1/customers com regras:
-    - ADMIN lista/vê/edita/deleta todos os registros
-    - USER lista/vê/edita/deleta apenas registros com ownerId == sub do JWT
-  - Admin /api/v1/users:
-    - GET list ordenado por email, GET by id, POST create (normalizar email; 409 duplicado; roles obrigatórias)
-    - PATCH update enabled + roles com proteção anti auto-bloqueio (não desativar a si mesmo; não remover ROLE_ADMIN de si mesmo)
-  - Method security @PreAuthorize no controller admin
-  - CORS permitindo http://localhost:4200 incluindo métodos GET POST PUT PATCH DELETE OPTIONS
-  - Seed apenas profile dev criando admin padrão (email/senha configuráveis por env)
-
-Requisitos frontend:
-- Rotas lazy (standalone components): login, customers (/customers; /clients pode redirecionar) protegido por authGuard, users protegido por authGuard + roleGuard ROLE_ADMIN
-- Feature customers em /customers: listagem (nome, email, telefone, CPF ou CNPJ, data criação ou atualização), CRUD com Reactive Forms + validações e mensagens de erro; exclusão com confirmação; consumir /api/v1/customers (ou documentar JSON local apenas se for modo protótipo)
-- Opcional: Angular Material para UI
-- TokenStorage localStorage simples
-- Interceptor com Bearer + refresh automático em 401
-- AuthService com decode mínimo de JWT para roles/sub (sem validar assinatura no browser)
-- Telas: login, customers CRUD, users admin (list/create/edit roles+enabled)
-- Angular tests com Karma; usar Puppeteer para definir CHROME_BIN no karma.conf.js
-
-Testes:
-- Backend: H2 para testes, Flyway desligado nos testes com ddl-auto create-drop; testes unitários Mockito para services principais (Auth, Customer, UserAdmin)
-- Frontend: specs para api customers/users, interceptor, guards, formulário clientes
-
-Entrega:
-- README com como subir Postgres (docker/.env.example → docker/.env), backend e frontend; link repo e opcional deploy
-
-Siga uma ordem incremental: (1) compose + flyway + health, (2) auth login/refresh, (3) customers RBAC + ownership, (4) users admin, (5) frontend auth + customers + users, (6) testes mínimos.
-Pare após (2) para eu validar tokens no Postman.
-```
